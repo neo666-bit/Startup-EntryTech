@@ -1,6 +1,439 @@
+/* ==========================================================================
+   VARIÁVEIS
+   ========================================================================== */
 :host {
+  
+  background:var(--background);
+  color:var(--cor-texto);
+
+  --background:#f3f0e8;
+  --cor-texto:#1f2a24;
+  --cor-texto-secundario:#667068;
+  --cor-texto-botao:#fff;
+
+  --fundo-card:#fbfaf5;
+  --cor-borda:#babab8;
+
+  --verde-escuro:#2b4a3d;
+  --verde-claro:#dfe8dc;
+  --cor-destaque:#e07a54;
+
+  display:block;
+  min-height:100vh;
+  font-family:Georgia,"Times New Roman",serif;
+  line-height:1.55;
+}
+
+/* ==========================================================================
+   CONTAINER E TIPOGRAFIA
+   ========================================================================== */
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.titulo-hero {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.08;
+  margin: 12px 0 16px;
+}
+
+.titulo {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(26px, 3.5vw, 36px);
+  line-height: 1.15;
+  margin: 8px 0 12px;
+}
+
+.etiqueta {
   display: block;
-  min-height: 100vh;
-  background-color: rgb(61, 61, 61);
-  padding-top: 1px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.sobretitulo {
+  display: block;
+  color: var(--cor-destaque);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.texto-secundario {
+  color: var(--cor-texto-secundario);
+}
+
+.texto-limitado {
+  max-width: 560px;
+}
+
+/* ==========================================================================
+   SEÇÕES
+   ========================================================================== */
+.secao {
+  padding: 72px 0 0;
+}
+
+/* ==========================================================================
+   NAVEGAÇÃO
+   ========================================================================== */
+.navegacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+}
+
+.logo p {
+  margin: 0;
+}
+
+.atalhos {
+  display: flex;
+  align-items: center;
+}
+
+.atalho-nav {
+  color: var(--cor-texto-secundario);
+  text-decoration: none;
+  font-size: 14px;
+  margin-right: 20px;
+}
+
+/* ==========================================================================
+   BOTÕES
+   ========================================================================== */
+.button-entrar {
+  display: inline-block;
+  background: var(--cor-destaque);
+  color: var(--cor-texto-botao);
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.button {
+  display: inline-block;
+  background: var(--cor-destaque);
+  color: var(--cor-texto-botao);
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.button-pequeno {
+  margin-left: 22px;
+  padding: 9px 16px;
+  font-size: 14px;
+}
+
+.button-contorno {
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentColor;
+}
+
+.button-entrar,
+.button {
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.button-entrar:hover,
+.button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(224, 122, 84, 0.35);
+}
+
+.button-entrar:active,
+.button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.button-contorno:hover {
+  filter: none;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   HERO
+   ========================================================================== */
+.hero {
+  background: var(--verde-escuro);
+  color: #f3f0e8;
+  border-radius: 22px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+  overflow: hidden;
+  align-items: center;
+}
+
+.hero-texto {
+  padding: 48px 40px;
+}
+
+.hero-descricao {
+  opacity: 0.85;
+  max-width: 440px;
+  margin: 0 0 24px;
+}
+
+.hero-botoes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hero-aviso {
+  display: block;
+  margin-top: 14px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.hero-imagem {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(1.3);
+}
+
+/* ==========================================================================
+   RECURSOS (CARDS)
+   ========================================================================== */
+.recursos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.card {
+  background: var(--fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.card-icone {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.card-titulo {
+  margin: 10px 0 6px;
+  font-size: 18px;
+}
+
+.card-texto {
+  margin: 0;
+  color: var(--cor-texto-secundario);
+  font-size: 15px;
+}
+
+.card,
+.passo {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card:hover,
+.passo:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(31, 42, 36, 0.12);
+  border-color: var(--cor-destaque);
+}
+
+/* ==========================================================================
+   COMO FUNCIONA (PASSOS)
+   ========================================================================== */
+.passos {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.passo {
+  background: var(--fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.passo-icone {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--verde-escuro);
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.passo-titulo {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.passo-texto {
+  color: var(--cor-texto-secundario);
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   DUAS COLUNAS (PLANO E NUTRICIONISTA)
+   ========================================================================== */
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.plano {
+  background: var(--fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.plano-invertido {
+  order: 2;
+}
+
+.plano-botao {
+  margin-top: 18px;
+}
+
+.meta-calorias {
+  background: var(--verde-escuro);
+  color: #f3f0e8;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.meta-valor {
+  display: block;
+  font-size: 38px;
+  line-height: 1.1;
+}
+
+.meta-descricao {
+  display: block;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.chip {
+  background: var(--verde-claro);
+  border: 1px solid var(--cor-borda);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.lista-check {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+.lista-check li {
+  padding: 8px 0 8px 28px;
+  position: relative;
+  color: var(--cor-texto-secundario);
+}
+
+.lista-check li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--cor-destaque);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   CHAMADA FINAL E RODAPÉ
+   ========================================================================== */
+.chamada-final {
+  background: var(--verde-claro);
+  border-radius: 22px;
+  padding: 48px 28px;
+  text-align: center;
+}
+
+.chamada-texto {
+  margin: 0 0 22px;
+}
+
+.rodape {
+  padding: 40px 0 30px;
+  color: var(--cor-texto-secundario);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   RESPONSIVO
+   ========================================================================== */
+@media (max-width: 820px) {
+  .hero,
+  .duas-colunas {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-texto {
+    padding: 32px 24px;
+  }
+
+  .recursos {
+    grid-template-columns: 1fr;
+  }
+
+  .passos {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .atalho-nav {
+    display: none;
+  }
 }
