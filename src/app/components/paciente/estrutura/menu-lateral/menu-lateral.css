@@ -1,0 +1,95 @@
+/* ==========================================================================
+   As cores (var(--...)) estão declaradas em src/styles.css
+   ========================================================================== */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 12px 12px;
+  
+  background: #fff;
+  border-right: 1px solid var(--cor-borda);
+  overflow-y: auto;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+
+  border-radius: 10px;
+  color: var(--cor-texto);
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.menu a:hover {
+  background: var(--background);
+}
+
+.menu a.ativo {
+  background: var(--verde-claro);
+  font-weight: 600;
+}
+
+.menu a i {
+  width: 20px;
+  font-size: 17px;
+  text-align: center;
+  color: var(--cor-texto-secundario);
+}
+
+.menu a.ativo i {
+  color: var(--verde-escuro);
+}
+
+.card-plano {
+  padding: 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: var(--fundo-card);
+  font-size: 13px;
+}
+
+.card-topo {
+  display: flex;
+  justify-content: space-between;
+}
+
+.estrela {
+  color: var(--cor-destaque);
+}
+
+.card-plano p {
+  margin: 8px 0 14px;
+  color: var(--cor-texto-secundario);
+  font-size: 12px;
+}
+
+.perfil-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--cor-texto-secundario);
+}
+
+.barra {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--verde-claro);
+}
+
+.preenchimento {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--verde-escuro);
+}
