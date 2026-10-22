@@ -6,3 +6,22 @@ html, body {
   height: 100%;
 }
 
+/* cores usadas nos outros arquivos CSS*/
+:root {
+  --background:#f3f0e8;
+  --cor-texto:#1f2a24;
+  --cor-texto-secundario:#667068;
+  --cor-texto-botao:#fff;
+
+  --fundo-card:#fbfaf5;
+  --cor-borda:#babab8;
+
+  --verde-escuro:#2b4a3d;
+  --verde-claro:#dfe8dc;
+  --cor-destaque:#e07a54;
+}
+
+body {
+  background: var(--background);
+  color: var(--cor-texto);
+}

@@ -1,0 +1,64 @@
+/* ==========================================================================
+   As cores (var(--...)) estão declaradas em src/styles.css
+   ========================================================================== */
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+/* .logo-icone { -- ainda sem logo
+  
+} */
+
+.logo-icone::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  
+  border: 2px solid #fff;
+  transform: rotate(45deg);
+}
+
+.logo-texto {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+}
+
+.direita {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ajuda {
+  font-size: 14px;
+  color: var(--cor-texto-secundario);
+  text-decoration: none;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+  font-weight: 600;
+  text-decoration: none;
+}
