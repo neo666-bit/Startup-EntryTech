@@ -103,15 +103,15 @@ export class MontarDieta {
   protected readonly stepLabels = ['Objetivo', 'Corpo e rotina', 'Alimentação', 'Rotina alimentar', 'Revisão'];
 
   protected readonly goals: Option[] = [
-    { title: 'Perder peso', description: 'Déficit leve e sustentável, preservando sua energia.', icon: '↘' },
-    { title: 'Manter o peso', description: 'Equilíbrio para nutrir bem e manter sua rotina.', icon: '⚖' },
-    { title: 'Ganhar massa', description: 'Mais energia e proteína para apoiar seus treinos.', icon: '⌁' },
+    { title: 'Perder peso', description: 'Déficit leve e sustentável, preservando sua energia.', icon: 'bi-graph-down-arrow' },
+    { title: 'Manter o peso', description: 'Equilíbrio para nutrir bem e manter sua rotina.', icon: 'bi-sliders2' },
+    { title: 'Ganhar massa', description: 'Mais energia e proteína para apoiar seus treinos.', icon: 'bi-lightning-charge' },
   ];
 
   protected readonly budgets: Option[] = [
-    { title: 'Econômico', description: 'Ingredientes essenciais e maior reaproveitamento.', icon: '▤' },
-    { title: 'Equilibrado', description: 'Variedade com compras planejadas.', icon: '♜' },
-    { title: 'Flexível', description: 'Mais opções premium e conveniência.', icon: '◇' },
+    { title: 'Econômico', description: 'Ingredientes essenciais e maior reaproveitamento.', icon: 'bi-piggy-bank' },
+    { title: 'Equilibrado', description: 'Variedade com compras planejadas.', icon: 'bi-wallet2' },
+    { title: 'Flexível', description: 'Mais opções premium e conveniência.', icon: 'bi-gem' },
   ];
 
   protected readonly sexOptions = [

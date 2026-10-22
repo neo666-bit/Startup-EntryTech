@@ -9,9 +9,9 @@
   <div class="booking-grid">
     <section class="card calendar">
       <div class="calendar-head">
-        <button>‹</button>
+        <button aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></button>
         <h2>Outubro de 2026</h2>
-        <button>›</button>
+        <button aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></button>
       </div>
       <div class="week">
         @for (d of weekDays; track d) {
@@ -29,7 +29,7 @@
           </button>
         }
       </div>
-      <div class="legend">Disponível <span>● Selecionado</span></div>
+      <div class="legend">Disponível <span><i class="bi bi-circle-fill"></i> Selecionado</span></div>
     </section>
 
     <section class="card time-card">
@@ -39,7 +39,7 @@
       <div class="time-options">
         @for (t of morning; track t) {
           <button [class.selected]="time() === t" (click)="time.set(t)">
-            @if (time() === t) { ✓ }{{ t }}
+            @if (time() === t) { <i class="bi bi-check-lg"></i> } {{ t }}
           </button>
         }
       </div>
@@ -57,10 +57,10 @@
           <img [src]="marinaPhoto" alt="" />
           <div><b>Dra. Marina Costa</b><small>CRN-3 58721</small></div>
         </div>
-        <div class="summary-line"><span>▣ Data</span><b>Sex, {{ pad(date()) }} out</b></div>
-        <div class="summary-line"><span>◷ Horário</span><b>{{ time() }}–11:20</b></div>
-        <div class="summary-line"><span>▣ Modalidade</span><b>Online</b></div>
-        <div class="summary-line"><span>▤ Valor</span><b>R$ 189</b></div>
+        <div class="summary-line"><span><i class="bi bi-calendar-event"></i> Data</span><b>Sex, {{ pad(date()) }} out</b></div>
+        <div class="summary-line"><span><i class="bi bi-clock"></i> Horário</span><b>{{ time() }}–11:20</b></div>
+        <div class="summary-line"><span><i class="bi bi-camera-video"></i> Modalidade</span><b>Online</b></div>
+        <div class="summary-line"><span><i class="bi bi-credit-card"></i> Valor</span><b>R$ 189</b></div>
       </section>
       <section class="card">
         <label class="field">
@@ -75,7 +75,9 @@
         @for (s of shares; track s; let i = $index) {
           <label class="check-row"><input type="checkbox" [checked]="i < 2" />{{ s }}</label>
         }
-        <button class="btn btn-accent" routerLink="/consulta-confirmada">◇ Solicitar acompanhamento</button>
+        <button class="btn btn-accent" routerLink="/consulta-confirmada">
+          <i class="bi bi-calendar-check"></i> Solicitar acompanhamento
+        </button>
       </section>
     </div>
   </div>

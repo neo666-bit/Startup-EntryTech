@@ -20,11 +20,11 @@ export class AppShell {
   protected readonly marinaPhoto = marinaPhoto;
 
   protected readonly nav = [
-    { path: '/home', label: 'Painel', icon: '▦' },
-    { path: '/minha-dieta', label: 'Minha dieta', icon: '⑂' },
-    { path: '/progresso', label: 'Progresso', icon: '↗' },
-    { path: '/nutricionistas', label: 'Nutricionistas', icon: '♧' },
-    { path: '/analise-foto', label: 'Análise por foto', icon: '▣' },
+    { path: '/home', label: 'Painel', icon: 'bi-grid' },
+    { path: '/minha-dieta', label: 'Minha dieta', icon: 'bi-journal-check' },
+    { path: '/progresso', label: 'Progresso', icon: 'bi-graph-up-arrow' },
+    { path: '/nutricionistas', label: 'Nutricionistas', icon: 'bi-people' },
+    { path: '/analise-foto', label: 'Análise por foto', icon: 'bi-camera' },
   ];
 
   private readonly url = toSignal(

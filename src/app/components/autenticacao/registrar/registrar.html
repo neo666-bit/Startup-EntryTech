@@ -1,7 +1,7 @@
 <div class="auth-page">
   <header class="auth-topbar">
     <a class="brand" routerLink="/">
-      <span class="brand-mark">◇</span>
+      <span class="brand-mark"><i class="bi bi-heart-pulse-fill"></i></span>
       <strong>NutriSync</strong>
     </a>
     <div class="top-links">
@@ -179,7 +179,8 @@
         </label>
 
         <button type="submit" class="btn-submit" [disabled]="carregando()">
-          {{ carregando() ? 'Criando sua conta...' : 'Criar minha conta e montar dieta →' }}
+          {{ carregando() ? 'Criando sua conta...' : 'Criar minha conta e montar dieta' }}
+          <i class="bi bi-arrow-right"></i>
         </button>
       </form>
 

@@ -7,13 +7,13 @@
   </p>
 
   <div class="search-bar">
-    <span>⌕</span>
+    <span><i class="bi bi-search"></i></span>
     <input
       [value]="search()"
       (input)="onSearch($event)"
       placeholder="Busque por nome, especialidade ou necessidade"
     />
-    <span>▣ Consulta online</span>
+    <span><i class="bi bi-camera-video"></i> Consulta online</span>
     <button class="btn btn-primary">Buscar</button>
   </div>
 
@@ -57,7 +57,7 @@
             </h3>
             <small>CRN-3 58721 • Verificada</small>
             <p>{{ person.area }}</p>
-            <b>★ 4,9 <small>(128 avaliações)</small></b>
+            <b><i class="bi bi-star-fill"></i> 4,9 <small>(128 avaliações)</small></b>
             <div class="chips">
               <span class="chip">Online</span>
               <span class="chip">Plano alimentar</span>
@@ -67,7 +67,7 @@
           <div class="professional-price">
             <strong>{{ person.price }}</strong>
             <small>por consulta • 50 min</small>
-            <span>▣ Hoje, 18:30</span>
+            <span><i class="bi bi-calendar-event"></i> Hoje, 18:30</span>
             <button
               class="btn"
               [class.btn-primary]="person.best"

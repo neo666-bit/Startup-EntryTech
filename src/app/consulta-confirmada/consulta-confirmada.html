@@ -1,5 +1,5 @@
 <div class="page confirmation">
-  <div class="success-icon">✓</div>
+  <div class="success-icon"><i class="bi bi-check-lg"></i></div>
   <span class="success-pill">Solicitação confirmada</span>
   <h1>Agora seu plano tem<br />acompanhamento.</h1>
   <p class="lead">
@@ -9,7 +9,7 @@
 
   <section class="card connection">
     <div>
-      <span class="big-icon">⑂</span>
+      <span class="big-icon"><i class="bi bi-journal-check"></i></span>
       <small>Plano alimentar</small>
       @if (plan(); as p) {
         <strong>Plano Equilíbrio</strong>
@@ -19,7 +19,7 @@
         <span>Crie sua dieta para compartilhar com a nutricionista</span>
       }
     </div>
-    <div class="connected">◇<span>Conectados</span></div>
+    <div class="connected"><i class="bi bi-link-45deg"></i><span>Conectados</span></div>
     <div>
       <img [src]="marinaPhoto" alt="" />
       <span>
@@ -33,21 +33,25 @@
   <div class="confirmation-grid">
     <section class="card">
       <h2>Sua primeira consulta</h2>
-      <div class="summary-line"><span>▣ Data</span><b>Sexta, 02 de outubro</b></div>
-      <div class="summary-line"><span>◷ Horário</span><b>10:30–11:20</b></div>
-      <div class="summary-line"><span>▣ Modalidade</span><b>Videochamada na NutriSync</b></div>
-      <div class="reminder">♧ Enviaremos um lembrete por e-mail 24 horas antes.</div>
+      <div class="summary-line"><span><i class="bi bi-calendar-event"></i> Data</span><b>Sexta, 02 de outubro</b></div>
+      <div class="summary-line"><span><i class="bi bi-clock"></i> Horário</span><b>10:30–11:20</b></div>
+      <div class="summary-line"><span><i class="bi bi-camera-video"></i> Modalidade</span><b>Videochamada na NutriSync</b></div>
+      <div class="reminder"><i class="bi bi-bell"></i> Enviaremos um lembrete por e-mail 24 horas antes.</div>
     </section>
     <section class="card">
       <h2>Enquanto isso</h2>
-      <p>▣ Registre refeições e sinais de fome por 3 dias</p>
-      <p>◯ Envie dúvidas para Marina pelo chat</p>
-      <p>↗ Acompanhe peso, energia e treino no Progresso</p>
+      <p><i class="bi bi-camera"></i> Registre refeições e sinais de fome por 3 dias</p>
+      <p><i class="bi bi-chat-dots"></i> Envie dúvidas para Marina pelo chat</p>
+      <p><i class="bi bi-graph-up-arrow"></i> Acompanhe peso, energia e treino no Progresso</p>
     </section>
   </div>
 
   <div class="center-actions">
-    <button class="btn btn-primary" routerLink="/minha-dieta">⑂ Ver meu plano</button>
-    <button class="btn btn-outline" routerLink="/home">▦ Ir para o painel</button>
+    <button class="btn btn-primary" routerLink="/minha-dieta">
+      <i class="bi bi-journal-check"></i> Ver meu plano
+    </button>
+    <button class="btn btn-outline" routerLink="/home">
+      <i class="bi bi-grid"></i> Ir para o painel
+    </button>
   </div>
 </div>

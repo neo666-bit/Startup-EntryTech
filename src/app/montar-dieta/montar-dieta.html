@@ -22,7 +22,7 @@
           <div class="options-row">
             @for (o of goals; track o.title) {
               <button class="option-card" [class.selected]="form().goal === o.title" (click)="patch({ goal: $any(o.title) })">
-                <span class="option-icon">{{ o.icon }}</span>
+                <span class="option-icon"><i class="bi" [class]="o.icon"></i></span>
                 <i class="radio"></i>
                 <strong>{{ o.title }}</strong>
                 <small>{{ o.description }}</small>
@@ -49,7 +49,7 @@
             Seu objetivo orienta calorias e porções, mas nunca substitui a avaliação clínica. Evitamos
             restrições extremas.
           </p>
-          <b>✓ Você poderá conectar uma nutricionista ao final.</b>
+          <b><i class="bi bi-check2-circle"></i> Você poderá conectar uma nutricionista ao final.</b>
         </section>
       </div>
     }
@@ -124,7 +124,7 @@
               </label>
             </div>
             @if (attempted() && errors()['goal']) {
-              <div class="warning">△ {{ errors()['goal'] }}</div>
+              <div class="warning"><i class="bi bi-exclamation-triangle"></i> {{ errors()['goal'] }}</div>
             }
           </section>
           <section class="card">
@@ -144,7 +144,7 @@
           </section>
         </div>
         <section class="card info-card">
-          <div class="big-icon">♢</div>
+          <div class="big-icon"><i class="bi bi-shield-check"></i></div>
           <h3>Seus dados, com cuidado</h3>
           <p>Usamos essas informações apenas para personalizar seu plano e seu acompanhamento.</p>
           <p>Em caso de gestação, doença renal ou transtorno alimentar, recomendamos avaliação profissional.</p>
@@ -169,13 +169,16 @@
                 [class.selected]="item === 'Nenhuma' ? form().restrictions.length === 0 : form().restrictions.includes(item)"
                 (click)="toggleRestriction(item)"
               >
-                @if (item === 'Nenhuma' ? form().restrictions.length === 0 : form().restrictions.includes(item)) { ✓ }{{ item }}
+                @if (item === 'Nenhuma' ? form().restrictions.length === 0 : form().restrictions.includes(item)) {
+                  <i class="bi bi-check-lg"></i>
+                }
+                {{ item }}
               </button>
             }
           </div>
           @if (form().restrictions.includes('Lactose')) {
             <div class="warning">
-              △ Marcamos lactose como restrição. Produtos “sem lactose” poderão aparecer.
+              <i class="bi bi-exclamation-triangle"></i> Marcamos lactose como restrição. Produtos “sem lactose” poderão aparecer.
             </div>
           }
           <label class="field">
@@ -194,7 +197,7 @@
           <div class="chips">
             @for (item of prefOptions; track item) {
               <button class="chip" [class.selected]="form().preferences.includes(item)" (click)="togglePreference(item)">
-                @if (form().preferences.includes(item)) { ✓ }{{ item }}
+                @if (form().preferences.includes(item)) { <i class="bi bi-check-lg"></i> } {{ item }}
               </button>
             }
           </div>
@@ -231,7 +234,7 @@
           <div class="options-row compact">
             @for (o of budgets; track o.title) {
               <button class="option-card" [class.selected]="form().budget === o.title" (click)="patch({ budget: o.title })">
-                <span class="option-icon">{{ o.icon }}</span>
+                <span class="option-icon"><i class="bi" [class]="o.icon"></i></span>
                 <i class="radio"></i>
                 <strong>{{ o.title }}</strong>
                 <small>{{ o.description }}</small>
@@ -275,7 +278,7 @@
       </p>
       @if (!preview()) {
         <div class="warning">
-          △ Faltam dados corporais para calcular suas calorias.
+          <i class="bi bi-exclamation-triangle"></i> Faltam dados corporais para calcular suas calorias.
           <button class="link-btn" (click)="goTo(2)">Preencher agora</button>
         </div>
       }
@@ -307,7 +310,7 @@
               }
             </p>
             @for (note of p.notes; track note) {
-              <p class="calc-detail">△ {{ note }}</p>
+              <p class="calc-detail"><i class="bi bi-exclamation-triangle"></i> {{ note }}</p>
             }
           } @else {
             <strong>— kcal</strong>
@@ -317,17 +320,21 @@
             <b>Revisão responsável</b>
             <small>O plano não substitui diagnóstico ou prescrição clínica.</small>
           </div>
-          <button class="btn btn-accent" [disabled]="!preview()" (click)="finish()">✦ Gerar meu plano</button>
+          <button class="btn btn-accent" [disabled]="!preview()" (click)="finish()">
+            <i class="bi bi-stars"></i> Gerar meu plano
+          </button>
         </section>
       </div>
     }
   }
 
   <div class="wizard-footer">
-    <button class="btn btn-ghost" (click)="back()">← {{ step() === 1 ? 'Sair' : 'Voltar' }}</button>
+    <button class="btn btn-ghost" (click)="back()">
+      <i class="bi bi-arrow-left"></i> {{ step() === 1 ? 'Sair' : 'Voltar' }}
+    </button>
     @if (step() < 5) {
       <button class="btn btn-primary" (click)="next()">
-        {{ step() === 4 ? 'Revisar respostas' : 'Continuar' }} →
+        {{ step() === 4 ? 'Revisar respostas' : 'Continuar' }} <i class="bi bi-arrow-right"></i>
       </button>
     }
   </div>

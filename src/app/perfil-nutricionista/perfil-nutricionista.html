@@ -3,16 +3,18 @@
   <section class="profile-hero">
     <img [src]="marinaPhoto" alt="Dra. Marina Costa" />
     <div>
-      <span>✓ Profissional verificada</span>
+      <span><i class="bi bi-patch-check-fill"></i> Profissional verificada</span>
       <h1>Dra. Marina Costa</h1>
       <small>Nutricionista • CRN-3 58721</small>
       <p>Emagrecimento sustentável, comportamento alimentar e saúde da mulher.</p>
-      <b>★ 4,9 <small>(128 avaliações)</small> · ▣ 9 anos de experiência</b>
+      <b><i class="bi bi-star-fill"></i> 4,9 <small>(128 avaliações)</small> · <i class="bi bi-award"></i> 9 anos de experiência</b>
     </div>
     <div class="price-box">
       <strong>R$ 189</strong>
       <small>Consulta online • 50 min</small>
-      <button class="btn btn-accent" routerLink="/agendar-consulta">▣ Ver horários</button>
+      <button class="btn btn-accent" routerLink="/agendar-consulta">
+        <i class="bi bi-calendar-week"></i> Ver horários
+      </button>
       <small>Próximo: hoje às 18:30</small>
     </div>
   </section>
@@ -41,7 +43,7 @@
       <section class="card">
         <div class="card-title">
           <h2>O que pacientes dizem</h2>
-          <b>☆ 4,9 <small>(128 avaliações)</small></b>
+          <b><i class="bi bi-star-fill"></i> 4,9 <small>(128 avaliações)</small></b>
         </div>
         @for (r of reviews; track r.author) {
           <blockquote>
@@ -64,7 +66,7 @@
       <section class="card credentials">
         <h3>Formação e credenciais</h3>
         @for (c of credentials; track c) {
-          <p>✓ {{ c }}</p>
+          <p><i class="bi bi-check2-circle"></i> {{ c }}</p>
         }
       </section>
     </div>

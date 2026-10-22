@@ -7,10 +7,12 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <section class="card empty-state">
-      <div class="big-icon">⑂</div>
+      <div class="big-icon"><i class="bi bi-journal-medical"></i></div>
       <h2>{{ title() }}</h2>
       <p>{{ description() }}</p>
-      <button class="btn btn-accent" routerLink="/montar-dieta">✦ Criar minha dieta</button>
+      <button class="btn btn-accent" routerLink="/montar-dieta">
+        <i class="bi bi-stars"></i> Criar minha dieta
+      </button>
     </section>
   `,
 })

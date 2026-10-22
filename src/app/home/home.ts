@@ -21,9 +21,9 @@ export class Home {
   protected readonly todayLabel = dateLabel(new Date());
 
   protected readonly features = [
-    { icon: '☷', title: 'Ajustado ao seu dia', description: 'Refeições compatíveis com seus horários e orçamento.' },
-    { icon: '⟳', title: 'Flexível de verdade', description: 'Substituições simples para você não ficar sem opções.' },
-    { icon: '♧', title: 'Apoio quando quiser', description: 'Conecte um nutricionista ao plano a qualquer momento.' },
+    { icon: 'bi-calendar2-check', title: 'Ajustado ao seu dia', description: 'Refeições compatíveis com seus horários e orçamento.' },
+    { icon: 'bi-arrow-repeat', title: 'Flexível de verdade', description: 'Substituições simples para você não ficar sem opções.' },
+    { icon: 'bi-person-heart', title: 'Apoio quando quiser', description: 'Conecte um nutricionista ao plano a qualquer momento.' },
   ];
 
   protected readonly today = computed(() => this.plan()?.days.find((d) => d.weekday === new Date().getDay()) ?? null);

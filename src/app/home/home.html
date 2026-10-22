@@ -15,8 +15,12 @@
           carboidratos e {{ p.summary.macroTargets.fat }} g de gorduras.
         </p>
         <div class="hero-action">
-          <button class="btn btn-accent" routerLink="/minha-dieta">⑂ Ver minha dieta</button>
-          <button class="btn btn-outline" routerLink="/montar-dieta">☷ Refazer plano</button>
+          <button class="btn btn-accent" routerLink="/minha-dieta">
+            <i class="bi bi-journal-check"></i> Ver minha dieta
+          </button>
+          <button class="btn btn-outline" routerLink="/montar-dieta">
+            <i class="bi bi-sliders"></i> Refazer plano
+          </button>
         </div>
       </div>
       <img [src]="foodPhoto" alt="Refeição saudável" />
@@ -25,7 +29,7 @@
       <div class="feature-grid">
         @for (m of d.meals.slice(0, 3); track m.slot) {
           <section class="card">
-            <span class="feature-icon">{{ m.time }}</span>
+            <span class="feature-icon"><i class="bi bi-clock"></i> {{ m.time }}</span>
             <strong>{{ m.label }}</strong>
             <p>{{ m.desc }}</p>
           </section>
@@ -47,7 +51,9 @@
           plano claro, flexível e conectado à vida real.
         </p>
         <div class="hero-action">
-          <button class="btn btn-accent" routerLink="/montar-dieta">✦ Criar minha dieta</button>
+          <button class="btn btn-accent" routerLink="/montar-dieta">
+            <i class="bi bi-stars"></i> Criar minha dieta
+          </button>
           <small>Seus dados de saúde ficam protegidos.</small>
         </div>
       </div>
@@ -56,7 +62,7 @@
     <div class="feature-grid">
       @for (f of features; track f.title) {
         <section class="card">
-          <span class="feature-icon">{{ f.icon }}</span>
+          <span class="feature-icon"><i class="bi" [class]="f.icon"></i></span>
           <strong>{{ f.title }}</strong>
           <p>{{ f.description }}</p>
         </section>

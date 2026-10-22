@@ -44,7 +44,7 @@ export class Progresso {
     if (p.profile.goal === 'Manter o peso') return `Meta: manter ${fmtDec(p.summary.targetWeightKg)} kg`;
     const r = this.remaining();
     const reached = p.profile.goal === 'Perder peso' ? r >= 0 : r <= 0;
-    return reached ? 'Meta de peso alcançada 🎉' : `Faltam ${fmtDec(Math.abs(r))} kg para ${fmtDec(p.summary.targetWeightKg)} kg`;
+    return reached ? 'Meta de peso alcançada' : `Faltam ${fmtDec(Math.abs(r))} kg para ${fmtDec(p.summary.targetWeightKg)} kg`;
   });
 
   /** Últimas 8 medidas, com a altura da barra proporcional ao intervalo de peso. */

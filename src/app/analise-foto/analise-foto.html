@@ -9,7 +9,14 @@
     <div class="analysis-stepper">
       @for (name of stepNames; track name; let i = $index) {
         <div [class.done]="i + 1 <= stage()">
-          <span>{{ i + 1 < stage() ? '✓' : i + 1 }}</span>{{ name }}
+          <span>
+            @if (i + 1 < stage()) {
+              <i class="bi bi-check-lg"></i>
+            } @else {
+              {{ i + 1 }}
+            }
+          </span>
+          {{ name }}
         </div>
       }
     </div>
@@ -21,11 +28,15 @@
             <h2>Comece com uma foto</h2>
             <p>Use a câmera do aparelho ou escolha uma imagem da sua galeria.</p>
             <div class="drop-zone">
-              <span class="camera-icon">▣</span>
+              <span class="camera-icon"><i class="bi bi-camera"></i></span>
               <h3>Seu próximo prato começa aqui</h3>
               <div>
-                <button class="btn btn-accent" (click)="camera.click()">▣ Tirar foto</button>
-                <button class="btn btn-outline" (click)="gallery.click()">↥ Enviar imagem</button>
+                <button class="btn btn-accent" (click)="camera.click()">
+                  <i class="bi bi-camera-fill"></i> Tirar foto
+                </button>
+                <button class="btn btn-outline" (click)="gallery.click()">
+                  <i class="bi bi-upload"></i> Enviar imagem
+                </button>
                 <input #camera type="file" accept="image/*" capture="environment" hidden (change)="onFile($event)" />
                 <input #gallery type="file" accept="image/*" hidden (change)="onFile($event)" />
               </div>
@@ -34,14 +45,14 @@
                 <small class="field-error">{{ photoError() }}</small>
               }
             </div>
-            <small>ⓘ A câmera só é ativada com sua permissão. A foto fica só no seu aparelho.</small>
+            <small><i class="bi bi-info-circle"></i> A câmera só é ativada com sua permissão. A foto fica só no seu aparelho.</small>
           </section>
           <section class="card photo-tips">
             <h2>Uma boa foto faz diferença</h2>
             <img [src]="tipsPhoto" alt="Exemplo de uma boa foto de refeição" />
-            <p>☼ <b>Prefira luz natural</b><br />Evite sombras fortes, flash e imagens desfocadas.</p>
-            <p>⌗ <b>Enquadre o prato inteiro</b><br />Fotografe de cima, sem cortar as bordas.</p>
-            <p>⑂ <b>Deixe os alimentos à vista</b><br />Separe os itens antes de começar a comer.</p>
+            <p><i class="bi bi-sun"></i> <b>Prefira luz natural</b><br />Evite sombras fortes, flash e imagens desfocadas.</p>
+            <p><i class="bi bi-bounding-box"></i> <b>Enquadre o prato inteiro</b><br />Fotografe de cima, sem cortar as bordas.</p>
+            <p><i class="bi bi-layers"></i> <b>Deixe os alimentos à vista</b><br />Separe os itens antes de começar a comer.</p>
           </section>
         </div>
       }
@@ -68,7 +79,9 @@
                   <input type="number" min="0" max="2000" [value]="item.grams" (input)="setGrams(i, $event)" /> g
                 </label>
                 <b>{{ itemKcal(item) }} kcal</b>
-                <button (click)="removeFood(i)" aria-label="Remover alimento">⌫</button>
+                <button (click)="removeFood(i)" aria-label="Remover alimento">
+                  <i class="bi bi-trash3"></i>
+                </button>
               </div>
             }
             <label class="field add-food">
@@ -97,7 +110,7 @@
         <div class="analysis-actions">
           <button class="btn btn-outline" (click)="restart()">Trocar foto</button>
           <button class="btn btn-accent" [disabled]="!canContinue()" (click)="toSwap()">
-            → Escolher refeição para substituir
+            <i class="bi bi-arrow-right"></i> Escolher refeição para substituir
           </button>
         </div>
       }
@@ -155,16 +168,18 @@
           }
         </div>
         <div class="analysis-actions">
-          <button class="btn btn-ghost" (click)="stage.set(2)">← Voltar ao prato</button>
+          <button class="btn btn-ghost" (click)="stage.set(2)">
+            <i class="bi bi-arrow-left"></i> Voltar ao prato
+          </button>
           <button class="btn btn-accent" [disabled]="!selectedMeal()" (click)="confirm()">
-            ⟳ Confirmar substituição
+            <i class="bi bi-arrow-repeat"></i> Confirmar substituição
           </button>
         </div>
       }
 
       @case (4) {
         <div class="success-banner">
-          ✓ <b>{{ selectedMeal()?.label }} substituído com sucesso</b>
+          <i class="bi bi-check-circle-fill"></i> <b>{{ selectedMeal()?.label }} substituído com sucesso</b>
           <button (click)="undo()">Desfazer troca</button>
         </div>
         <section class="card updated-total">
@@ -180,8 +195,12 @@
           </div>
         </section>
         <div class="analysis-actions">
-          <button class="btn btn-outline" (click)="restart()">▣ Analisar outro prato</button>
-          <button class="btn btn-primary" routerLink="/minha-dieta">⑂ Ver Minha dieta</button>
+          <button class="btn btn-outline" (click)="restart()">
+            <i class="bi bi-camera"></i> Analisar outro prato
+          </button>
+          <button class="btn btn-primary" routerLink="/minha-dieta">
+            <i class="bi bi-journal-check"></i> Ver Minha dieta
+          </button>
         </div>
       }
     }

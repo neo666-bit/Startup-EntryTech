@@ -12,13 +12,13 @@
         </p>
       </div>
       <div>
-        <button class="btn btn-outline" (click)="print()">⇩ Baixar PDF</button>
-        <button class="btn btn-outline" routerLink="/montar-dieta">☷ Editar preferências</button>
+        <button class="btn btn-outline" (click)="print()"><i class="bi bi-download"></i> Baixar PDF</button>
+        <button class="btn btn-outline" routerLink="/montar-dieta"><i class="bi bi-sliders"></i> Editar preferências</button>
       </div>
     </div>
 
     @for (note of p.summary.notes; track note) {
-      <div class="warning plan-note">△ {{ note }}</div>
+      <div class="warning plan-note"><i class="bi bi-exclamation-triangle"></i> {{ note }}</div>
     }
 
     <div class="chips day-tabs" role="tablist" aria-label="Dia da semana">
@@ -39,7 +39,7 @@
       <section class="card energy">
         <span>Meta diária</span>
         <strong>{{ fmtInt(p.summary.kcal) }} <small>kcal</small></strong>
-        <p>{{ goalNote() }}</p>
+        <p><i class="bi bi-bullseye"></i> {{ goalNote() }}</p>
       </section>
       <section class="card macro-card">
         <div class="card-title">
@@ -58,9 +58,9 @@
       </section>
       <section class="card focus">
         <h3>Foco desta semana</h3>
-        <p>✓ {{ fmtDec(waterLiters()) }} L de água ao longo do dia</p>
-        <p>✓ Vegetais no almoço e jantar</p>
-        <p>✓ Proteína em todas as refeições</p>
+        <p><i class="bi bi-check2-circle"></i> {{ fmtDec(waterLiters()) }} L de água ao longo do dia</p>
+        <p><i class="bi bi-check2-circle"></i> Vegetais no almoço e jantar</p>
+        <p><i class="bi bi-check2-circle"></i> Proteína em todas as refeições</p>
       </section>
     </div>
 
@@ -91,11 +91,13 @@
                   <span class="meal-actions">
                     @if (hasRecipe(meal.optionId)) {
                       <button class="btn btn-accent swap-btn" (click)="openRecipe(meal, $event)">
-                        📖 Ver receita
+                        <i class="bi bi-journal-text"></i> Ver receita
                       </button>
                     }
                     @if (!meal.fromPhoto) {
-                      <button class="btn btn-outline swap-btn" (click)="swap(i, $event)">↻ Trocar por outra opção</button>
+                      <button class="btn btn-outline swap-btn" (click)="swap(i, $event)">
+                        <i class="bi bi-arrow-repeat"></i> Trocar por outra opção
+                      </button>
                     }
                   </span>
                 }
@@ -117,12 +119,12 @@
           <section class="card">
             <div class="card-title">
               <h3>Trocas rápidas</h3>
-              <button aria-label="Trocas">↻</button>
+              <button aria-label="Trocas"><i class="bi bi-arrow-left-right"></i></button>
             </div>
             <p>Sem algum ingrediente? Mantenha o equilíbrio com estas trocas.</p>
             <ul>
               @for (s of swaps(); track s.from) {
-                <li>{{ s.from }}<br /><b>→ {{ s.to.join(' ou ') }}</b></li>
+                <li>{{ s.from }}<br /><b><i class="bi bi-arrow-right"></i> {{ s.to.join(' ou ') }}</b></li>
               }
             </ul>
           </section>

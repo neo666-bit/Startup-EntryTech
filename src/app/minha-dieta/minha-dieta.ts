@@ -89,9 +89,9 @@ export class MinhaDieta {
 
   protected readonly goalNote = computed(() => {
     const g = this.plan()?.profile.goal;
-    if (g === 'Perder peso') return '◉ Déficit leve e sustentável';
-    if (g === 'Ganhar massa') return '◉ Superávit moderado para ganho de massa';
-    return '◉ Calorias de manutenção';
+    if (g === 'Perder peso') return 'Déficit leve e sustentável';
+    if (g === 'Ganhar massa') return 'Superávit moderado para ganho de massa';
+    return 'Calorias de manutenção';
   });
 
   /** Trocas só com ingredientes que aparecem no plano e alternativas compatíveis com as restrições. */

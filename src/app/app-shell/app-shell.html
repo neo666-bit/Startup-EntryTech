@@ -2,12 +2,12 @@
   <div class="app">
     <header class="topbar">
       <button class="brand" routerLink="/home" aria-label="Ir para o painel">
-        <span class="brand-mark">◇</span>
+        <span class="brand-mark"><i class="bi bi-heart-pulse-fill"></i></span>
         <strong>NutriSync</strong>
       </button>
       <div class="top-actions">
-        <button class="help">ⓘ <span>Precisa de ajuda?</span></button>
-        <button class="notification" aria-label="Notificações">♧</button>
+        <button class="help"><i class="bi bi-question-circle"></i> <span>Precisa de ajuda?</span></button>
+        <button class="notification" aria-label="Notificações"><i class="bi bi-bell"></i></button>
         <img [src]="marinaPhoto" alt="Seu perfil" />
       </div>
     </header>
@@ -20,21 +20,21 @@
             [class.active]="active() === item.path"
             [routerLink]="item.path"
           >
-            <span>{{ item.icon }}</span>
+            <span><i class="bi" [class]="item.icon"></i></span>
             {{ item.label }}
           </button>
         }
       </nav>
       @if (diet.hasPlan()) {
         <div class="plan-mini">
-          <div><strong>Plano Equilíbrio</strong><span>☼</span></div>
+          <div><strong>Plano Equilíbrio</strong><span><i class="bi bi-sun"></i></span></div>
           <p>{{ diet.goalText() }}</p>
           <div class="profile-line"><span>Meta de peso</span><b>{{ diet.goalProgress() }}%</b></div>
           <div class="mini-progress"><i [style.width.%]="diet.goalProgress()"></i></div>
         </div>
       } @else {
         <div class="plan-mini">
-          <div><strong>Sem plano ainda</strong><span>☼</span></div>
+          <div><strong>Sem plano ainda</strong><span><i class="bi bi-sun"></i></span></div>
           <p>Crie sua dieta para ver sua meta e acompanhar seu progresso.</p>
         </div>
       }

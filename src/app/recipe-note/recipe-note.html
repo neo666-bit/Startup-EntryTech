@@ -11,11 +11,13 @@
         <small>{{ meal().label }} • {{ meal().time }}</small>
         <h2>{{ meal().desc }}</h2>
       </div>
-      <button #closeBtn class="note-close" (click)="closed.emit()" aria-label="Fechar receita">✕</button>
+      <button #closeBtn class="note-close" (click)="closed.emit()" aria-label="Fechar receita">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </header>
 
     <div class="note-meta">
-      <span>⏱ ~{{ meal().prepMin }} min</span>
+      <span><i class="bi bi-clock"></i> ~{{ meal().prepMin }} min</span>
       <span>{{ meal().kcal }} kcal</span>
       <span>P {{ meal().protein }} g</span>
       <span>C {{ meal().carbs }} g</span>
@@ -39,7 +41,7 @@
       </ol>
 
       @if (r.tip) {
-        <p class="note-tip">💡 {{ r.tip }}</p>
+        <p class="note-tip"><i class="bi bi-lightbulb"></i> {{ r.tip }}</p>
       }
     } @else {
       <p>Este prato não tem receita cadastrada.</p>
@@ -47,7 +49,9 @@
 
     <footer class="note-foot">
       @if (moreUrl(); as url) {
-        <a [href]="url" target="_blank" rel="noopener noreferrer">Mais receitas parecidas no Tudo Gostoso ↗</a>
+        <a [href]="url" target="_blank" rel="noopener noreferrer">
+          Mais receitas parecidas no Tudo Gostoso <i class="bi bi-box-arrow-up-right"></i>
+        </a>
       }
       <small>Estimativas nutricionais; não substituem a orientação de um nutricionista.</small>
     </footer>
