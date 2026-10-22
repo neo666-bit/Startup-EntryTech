@@ -28,12 +28,12 @@ const SWAP_CATALOG: SwapSuggestion[] = [
 const WEEK_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 @Component({
-  selector: 'app-plan',
+  selector: 'app-minha-dieta',
   imports: [RouterLink, EmptyPlan, RecipeNote],
-  templateUrl: './plan.html',
-  styleUrl: './plan.css',
+  templateUrl: './minha-dieta.html',
+  styleUrl: './minha-dieta.css',
 })
-export class Plan {
+export class MinhaDieta {
   private readonly diet = inject(DietService);
 
   protected readonly fmtInt = fmtInt;

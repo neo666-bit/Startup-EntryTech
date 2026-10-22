@@ -21,10 +21,10 @@ export class AppShell {
 
   protected readonly nav = [
     { path: '/home', label: 'Painel', icon: '▦' },
-    { path: '/plan', label: 'Minha dieta', icon: '⑂' },
-    { path: '/progress', label: 'Progresso', icon: '↗' },
-    { path: '/nutritionists', label: 'Nutricionistas', icon: '♧' },
-    { path: '/photo', label: 'Análise por foto', icon: '▣' },
+    { path: '/minha-dieta', label: 'Minha dieta', icon: '⑂' },
+    { path: '/progresso', label: 'Progresso', icon: '↗' },
+    { path: '/nutricionistas', label: 'Nutricionistas', icon: '♧' },
+    { path: '/analise-foto', label: 'Análise por foto', icon: '▣' },
   ];
 
   private readonly url = toSignal(
@@ -38,8 +38,10 @@ export class AppShell {
   /** Páginas internas destacam o item de menu "pai", como no design. */
   protected readonly active = computed(() => {
     const page = this.url().split('?')[0];
-    if (page === '/wizard') return '/plan';
-    if (['/profile', '/schedule', '/confirmed'].includes(page)) return '/nutritionists';
+    if (page === '/montar-dieta') return '/minha-dieta';
+    if (['/perfil-nutricionista', '/agendar-consulta', '/consulta-confirmada'].includes(page)) {
+      return '/nutricionistas';
+    }
     return page;
   });
 }

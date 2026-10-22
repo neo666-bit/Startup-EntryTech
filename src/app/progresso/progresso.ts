@@ -4,12 +4,12 @@ import { DietService } from '../nutrisync/diet.service';
 import { fmtDec } from '../nutrisync/format';
 
 @Component({
-  selector: 'app-progress',
+  selector: 'app-progresso',
   imports: [EmptyPlan],
-  templateUrl: './progress.html',
-  styleUrl: './progress.css',
+  templateUrl: './progresso.html',
+  styleUrl: './progresso.css',
 })
-export class Progress {
+export class Progresso {
   private readonly diet = inject(DietService);
 
   protected readonly fmtDec = fmtDec;

@@ -83,11 +83,11 @@ const EMPTY_FORM: WizardForm = {
 };
 
 @Component({
-  selector: 'app-wizard',
-  templateUrl: './wizard.html',
-  styleUrl: './wizard.css',
+  selector: 'app-montar-dieta',
+  templateUrl: './montar-dieta.html',
+  styleUrl: './montar-dieta.css',
 })
-export class Wizard {
+export class MontarDieta {
   private readonly router = inject(Router);
   private readonly diet = inject(DietService);
 
@@ -314,7 +314,7 @@ export class Wizard {
       return;
     }
     this.diet.generate(profile);
-    this.router.navigateByUrl('/plan');
+    this.router.navigateByUrl('/minha-dieta');
   }
 
   /** Se já existe um plano, o questionário abre preenchido para a pessoa só ajustar. */

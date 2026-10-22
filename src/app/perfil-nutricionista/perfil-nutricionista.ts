@@ -3,12 +3,12 @@ import { RouterLink } from '@angular/router';
 import { marinaPhoto } from '../nutrisync-data';
 
 @Component({
-  selector: 'app-profile',
+  selector: 'app-perfil-nutricionista',
   imports: [RouterLink],
-  templateUrl: './profile.html',
-  styleUrl: './profile.css',
+  templateUrl: './perfil-nutricionista.html',
+  styleUrl: './perfil-nutricionista.css',
 })
-export class Profile {
+export class PerfilNutricionista {
   protected readonly marinaPhoto = marinaPhoto;
 
   protected readonly steps = [

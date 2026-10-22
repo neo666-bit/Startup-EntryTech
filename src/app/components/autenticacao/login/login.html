@@ -1,1 +1,105 @@
-<p>login works!</p>
+<div class="auth-page">
+  <header class="auth-topbar">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark">◇</span>
+      <strong>NutriSync</strong>
+    </a>
+    <div class="top-links">
+      <span>Novo por aqui?</span>
+      <a class="btn-outline-sm" routerLink="/registrar">Criar minha conta</a>
+    </div>
+  </header>
+
+  <main class="auth-shell">
+    <section class="auth-editorial">
+      <div>
+        <span class="etiqueta">Bem-vindo de volta</span>
+        <h1 class="titulo-editorial">Sua rotina alimentar no seu ritmo.</h1>
+        <p class="descricao-editorial">
+          Acesse seu painel para consultar o cardápio da semana, abrir as receitas de cada refeição e
+          acompanhar a evolução do seu peso.
+        </p>
+
+        <ul class="lista-beneficios">
+          <li>Calorias e macronutrientes calculados para o seu objetivo</li>
+          <li>Bloco de notas com ingredientes e modo de preparo em cada prato</li>
+          <li>Registro de refeições por foto e evolução com nutricionistas</li>
+        </ul>
+      </div>
+
+      <div class="resumo-card">
+        <span class="etiqueta">Plano personalizado</span>
+        <strong>7 dias de refeições reais</strong>
+        <small>Substitua pratos com 1 clique mantendo suas metas do dia.</small>
+      </div>
+    </section>
+
+    <section class="auth-card">
+      <span class="sobretitulo">Acesso à conta</span>
+      <h2>Entrar no NutriSync</h2>
+      <p class="subtitulo">Use o e-mail e a senha cadastrados para abrir seu painel.</p>
+
+      @if (erro()) {
+        <div class="alerta alerta-erro" role="alert">{{ erro() }}</div>
+      }
+
+      <form class="auth-form" (ngSubmit)="entrar()">
+        <label class="campo">
+          <span>E-mail</span>
+          <input
+            type="email"
+            name="email"
+            placeholder="voce@exemplo.com"
+            autocomplete="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+          />
+        </label>
+
+        <label class="campo">
+          <div class="campo-topo">
+            <span>Senha</span>
+            <button type="button" class="link-inline" (click)="alternarSenha()">
+              {{ mostrarSenha() ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          <input
+            [type]="mostrarSenha() ? 'text' : 'password'"
+            name="senha"
+            placeholder="Digite sua senha"
+            autocomplete="current-password"
+            [ngModel]="senha()"
+            (ngModelChange)="senha.set($event)"
+          />
+        </label>
+
+        <div class="linha-opcoes">
+          <label class="check-lembrar">
+            <input
+              type="checkbox"
+              name="lembrar"
+              [ngModel]="lembrar()"
+              (ngModelChange)="lembrar.set($event)"
+            />
+            <span>Manter conectado neste dispositivo</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="carregando()">
+          {{ carregando() ? 'Entrando...' : 'Entrar na minha conta' }}
+        </button>
+      </form>
+
+      <div class="divisor"><span>ou</span></div>
+
+      <a class="btn-visitante" routerLink="/home">
+        Explorar o painel e criar dieta agora →
+      </a>
+
+      <p class="rodape-card">
+        Ainda não tem uma conta?
+        <a routerLink="/registrar">Cadastre-se gratuitamente</a>
+      </p>
+    </section>
+  </main>
+</div>

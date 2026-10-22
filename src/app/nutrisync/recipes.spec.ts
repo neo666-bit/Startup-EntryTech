@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Plan } from '../plan/plan';
+import { MinhaDieta } from '../minha-dieta/minha-dieta';
 import { DietService } from './diet.service';
 import { FOOD_CATALOG } from './food-catalog';
 import { formatItem, RECIPE_QUERY, recipeFor, RECIPES, recipeUrl } from './recipes';
@@ -36,7 +36,7 @@ describe('bloco de notas de receitas', () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     const diet = TestBed.inject(DietService);
     diet.generate(baseProfile);
-    const f = TestBed.createComponent(Plan);
+    const f = TestBed.createComponent(MinhaDieta);
     const el = f.nativeElement as HTMLElement;
     await f.whenStable();
 

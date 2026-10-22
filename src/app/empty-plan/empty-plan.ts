@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
       <div class="big-icon">⑂</div>
       <h2>{{ title() }}</h2>
       <p>{{ description() }}</p>
-      <button class="btn btn-accent" routerLink="/wizard">✦ Criar minha dieta</button>
+      <button class="btn btn-accent" routerLink="/montar-dieta">✦ Criar minha dieta</button>
     </section>
   `,
 })

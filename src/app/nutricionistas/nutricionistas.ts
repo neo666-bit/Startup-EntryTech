@@ -3,12 +3,12 @@ import { RouterLink } from '@angular/router';
 import { marinaPhoto, secondProfessional } from '../nutrisync-data';
 
 @Component({
-  selector: 'app-nutritionists',
+  selector: 'app-nutricionistas',
   imports: [RouterLink],
-  templateUrl: './nutritionists.html',
-  styleUrl: './nutritionists.css',
+  templateUrl: './nutricionistas.html',
+  styleUrl: './nutricionistas.css',
 })
-export class Nutritionists {
+export class Nutricionistas {
   protected readonly search = signal('');
 
   private readonly all = [

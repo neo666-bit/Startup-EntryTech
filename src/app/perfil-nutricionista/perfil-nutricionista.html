@@ -12,7 +12,7 @@
     <div class="price-box">
       <strong>R$ 189</strong>
       <small>Consulta online • 50 min</small>
-      <button class="btn btn-accent" routerLink="/schedule">▣ Ver horários</button>
+      <button class="btn btn-accent" routerLink="/agendar-consulta">▣ Ver horários</button>
       <small>Próximo: hoje às 18:30</small>
     </div>
   </section>
@@ -59,7 +59,7 @@
         @for (s of slots; track s.day) {
           <div class="schedule-line"><span>{{ s.day }}</span><b>{{ s.times }}</b></div>
         }
-        <button class="btn btn-primary" routerLink="/schedule">Selecionar horário</button>
+        <button class="btn btn-primary" routerLink="/agendar-consulta">Selecionar horário</button>
       </section>
       <section class="card credentials">
         <h3>Formação e credenciais</h3>

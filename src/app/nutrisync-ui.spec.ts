@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { DietService } from './nutrisync/diet.service';
 import { baseProfile } from './nutrisync/test-fixtures';
-import { Plan } from './plan/plan';
-import { Progress } from './progress/progress';
-import { PhotoAnalysis } from './photo-analysis/photo-analysis';
+import { MinhaDieta } from './minha-dieta/minha-dieta';
+import { Progresso } from './progresso/progresso';
+import { AnaliseFoto } from './analise-foto/analise-foto';
 import { Home } from './home/home';
-import { Wizard } from './wizard/wizard';
+import { MontarDieta } from './montar-dieta/montar-dieta';
 import { AppShell } from './app-shell/app-shell';
 
 const setup = () => {
@@ -21,9 +21,9 @@ describe('telas sem dieta criada', () => {
   beforeEach(setup);
 
   it.each<[string, Type<unknown>]>([
-    ['Minha dieta', Plan],
-    ['Progresso', Progress],
-    ['Análise por foto', PhotoAnalysis],
+    ['Minha dieta', MinhaDieta],
+    ['Progresso', Progresso],
+    ['Análise por foto', AnaliseFoto],
   ])('%s mostra só o convite para criar a dieta', async (_name, cmp) => {
     const f = TestBed.createComponent(cmp);
     await f.whenStable();
@@ -53,26 +53,26 @@ describe('telas sem dieta criada', () => {
 describe('depois de criar a dieta', () => {
   beforeEach(setup);
 
-  it('Plan exibe as calorias calculadas e as refeições reais', async () => {
+  it('MinhaDieta exibe as calorias calculadas e as refeições reais', async () => {
     const diet = TestBed.inject(DietService);
     const plan = diet.generate(baseProfile);
-    const f = TestBed.createComponent(Plan);
+    const f = TestBed.createComponent(MinhaDieta);
     await f.whenStable();
     expect(text(f)).toContain(plan.summary.kcal.toLocaleString('pt-BR'));
     expect(f.nativeElement.querySelectorAll('.meal').length).toBe(5);
     expect(f.nativeElement.querySelector('app-empty-plan')).toBeNull();
   });
 
-  it('Progress mostra o peso informado no questionário', async () => {
+  it('Progresso mostra o peso informado no questionário', async () => {
     const diet = TestBed.inject(DietService);
     diet.generate({ ...baseProfile, weightKg: 81.5 });
-    const f = TestBed.createComponent(Progress);
+    const f = TestBed.createComponent(Progresso);
     await f.whenStable();
     expect(text(f)).toContain('81,5 kg');
   });
 });
 
-describe('Wizard', () => {
+describe('MontarDieta', () => {
   beforeEach(setup);
 
   const click = (el: HTMLElement, label: RegExp) =>
@@ -85,7 +85,7 @@ describe('Wizard', () => {
   };
 
   it('não avança da etapa 2 sem os dados corporais e explica o que falta', async () => {
-    const f = TestBed.createComponent(Wizard);
+    const f = TestBed.createComponent(MontarDieta);
     const el = f.nativeElement as HTMLElement;
     await f.whenStable();
     click(el, /Continuar/); // 1 → 2
@@ -97,10 +97,10 @@ describe('Wizard', () => {
     expect(el.textContent).toContain('Selecione uma opção');
   });
 
-  it('preenche tudo, gera o plano com as calorias calculadas e vai para /plan', async () => {
+  it('preenche tudo, gera o plano com as calorias calculadas e vai para /minha-dieta', async () => {
     const router = TestBed.inject(Router);
     const nav = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-    const f = TestBed.createComponent(Wizard);
+    const f = TestBed.createComponent(MontarDieta);
     const el = f.nativeElement as HTMLElement;
     await f.whenStable();
 
@@ -125,7 +125,7 @@ describe('Wizard', () => {
     const saved = TestBed.inject(DietService).plan()!;
     expect(saved.summary.kcal).toBe(1820);
     expect(saved.profile.weightKg).toBe(74);
-    expect(nav).toHaveBeenCalledWith('/plan');
+    expect(nav).toHaveBeenCalledWith('/minha-dieta');
   });
 });
 

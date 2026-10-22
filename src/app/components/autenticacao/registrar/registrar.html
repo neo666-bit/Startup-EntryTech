@@ -1,1 +1,192 @@
-<p>registrar works!</p>
+<div class="auth-page">
+  <header class="auth-topbar">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark">◇</span>
+      <strong>NutriSync</strong>
+    </a>
+    <div class="top-links">
+      <span>Já possui cadastro?</span>
+      <a class="btn-outline-sm" routerLink="/login">Entrar</a>
+    </div>
+  </header>
+
+  <main class="auth-shell">
+    <section class="auth-editorial">
+      <div>
+        <span class="etiqueta">Comece no seu ritmo</span>
+        <h1 class="titulo-editorial">Uma alimentação possível, gostosa e só sua.</h1>
+        <p class="descricao-editorial">
+          Em menos de 4 minutos após criar sua conta, você informa sua rotina e recebe um plano
+          alimentar completo, calculado para a sua realidade.
+        </p>
+
+        <div class="passos-resumo">
+          <div class="passo-item">
+            <span>1</span>
+            <div>
+              <strong>Crie seu perfil</strong>
+              <small>Seus dados de saúde e preferências ficam salvos com segurança.</small>
+            </div>
+          </div>
+          <div class="passo-item">
+            <span>2</span>
+            <div>
+              <strong>Calcule sua meta diária</strong>
+              <small>Fórmula Mifflin-St Jeor ajustada ao seu nível de atividade.</small>
+            </div>
+          </div>
+          <div class="passo-item">
+            <span>3</span>
+            <div>
+              <strong>Receba o cardápio e as receitas</strong>
+              <small>7 dias de pratos brasileiros com modo de preparo passo a passo.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="resumo-card">
+        <span class="etiqueta">Sem fórmulas prontas</span>
+        <strong>Alergias, orçamento e tempo respeitados</strong>
+        <small>Sem lactose, sem glúten, vegetariano ou vegano: tudo adaptado a você.</small>
+      </div>
+    </section>
+
+    <section class="auth-card">
+      <span class="sobretitulo">Criar conta gratuita</span>
+      <h2>Comece sua jornada no NutriSync</h2>
+      <p class="subtitulo">Preencha seus dados abaixo para montar seu primeiro plano alimentar.</p>
+
+      @if (erro()) {
+        <div class="alerta alerta-erro" role="alert">{{ erro() }}</div>
+      }
+      @if (sucesso()) {
+        <div class="alerta alerta-sucesso" role="status">{{ sucesso() }}</div>
+      }
+
+      <div class="seletor-perfil" role="radiogroup" aria-label="Tipo de conta">
+        <button
+          type="button"
+          class="perfil-btn"
+          [class.ativo]="perfil() === 'paciente'"
+          (click)="perfil.set('paciente')"
+        >
+          <strong>Quero cuidar da alimentação</strong>
+          <small>Criar dieta, ver receitas e progresso</small>
+        </button>
+        <button
+          type="button"
+          class="perfil-btn"
+          [class.ativo]="perfil() === 'nutricionista'"
+          (click)="perfil.set('nutricionista')"
+        >
+          <strong>Sou nutricionista</strong>
+          <small>Acompanhar pacientes e planos</small>
+        </button>
+      </div>
+
+      <form class="auth-form" (ngSubmit)="verificarSenha()">
+        <label class="campo">
+          <span>Nome completo</span>
+          <input
+            type="text"
+            name="nome"
+            placeholder="Ex.: Marina Costa"
+            autocomplete="name"
+            [ngModel]="nome()"
+            (ngModelChange)="nome.set($event)"
+          />
+        </label>
+
+        <label class="campo">
+          <span>E-mail</span>
+          <input
+            type="email"
+            name="email"
+            placeholder="voce@exemplo.com"
+            autocomplete="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+          />
+        </label>
+
+        <div class="duas-colunas-form">
+          <label class="campo">
+            <span>Telefone / WhatsApp</span>
+            <input
+              type="tel"
+              name="telefone"
+              placeholder="(11) 99999-9999"
+              autocomplete="tel"
+              [ngModel]="telefone()"
+              (ngModelChange)="telefone.set($event)"
+            />
+          </label>
+
+          <label class="campo">
+            <span>Estado (UF)</span>
+            <select
+              name="estado"
+              [ngModel]="estado()"
+              (ngModelChange)="estado.set($event)"
+            >
+              @for (uf of estados; track uf) {
+                <option [value]="uf">{{ uf }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div class="duas-colunas-form">
+          <label class="campo">
+            <div class="campo-topo">
+              <span>Senha</span>
+              <button type="button" class="link-inline" (click)="alternarSenha()">
+                {{ mostrarSenha() ? 'Ocultar' : 'Mostrar' }}
+              </button>
+            </div>
+            <input
+              [type]="mostrarSenha() ? 'text' : 'password'"
+              name="senha"
+              placeholder="Mínimo de 6 caracteres"
+              autocomplete="new-password"
+              [ngModel]="senha()"
+              (ngModelChange)="senha.set($event)"
+            />
+          </label>
+
+          <label class="campo">
+            <span>Confirmar senha</span>
+            <input
+              [type]="mostrarSenha() ? 'text' : 'password'"
+              name="confirmar"
+              placeholder="Repita a senha"
+              autocomplete="new-password"
+              [ngModel]="confirmar()"
+              (ngModelChange)="confirmar.set($event)"
+            />
+          </label>
+        </div>
+
+        <label class="check-termos">
+          <input
+            type="checkbox"
+            name="termos"
+            [ngModel]="aceitouTermos()"
+            (ngModelChange)="aceitouTermos.set($event)"
+          />
+          <span>Concordo com os termos de uso e com a proteção dos meus dados de saúde.</span>
+        </label>
+
+        <button type="submit" class="btn-submit" [disabled]="carregando()">
+          {{ carregando() ? 'Criando sua conta...' : 'Criar minha conta e montar dieta →' }}
+        </button>
+      </form>
+
+      <p class="rodape-card">
+        Já tem uma conta no NutriSync?
+        <a routerLink="/login">Fazer login</a>
+      </p>
+    </section>
+  </main>
+</div>

@@ -3,12 +3,12 @@ import { RouterLink } from '@angular/router';
 import { marinaPhoto } from '../nutrisync-data';
 
 @Component({
-  selector: 'app-schedule',
+  selector: 'app-agendar-consulta',
   imports: [RouterLink],
-  templateUrl: './schedule.html',
-  styleUrl: './schedule.css',
+  templateUrl: './agendar-consulta.html',
+  styleUrl: './agendar-consulta.css',
 })
-export class Schedule {
+export class AgendarConsulta {
   protected readonly marinaPhoto = marinaPhoto;
   protected readonly date = signal(2);
   protected readonly time = signal('10:30');

@@ -43,12 +43,12 @@ interface PlateItem {
 const kcalOf = (p: number, c: number, f: number) => Math.round(p * 4 + c * 4 + f * 9);
 
 @Component({
-  selector: 'app-photo-analysis',
+  selector: 'app-analise-foto',
   imports: [RouterLink, EmptyPlan],
-  templateUrl: './photo-analysis.html',
-  styleUrl: './photo-analysis.css',
+  templateUrl: './analise-foto.html',
+  styleUrl: './analise-foto.css',
 })
-export class PhotoAnalysis {
+export class AnaliseFoto {
   private readonly diet = inject(DietService);
 
   protected readonly fmtInt = fmtInt;
