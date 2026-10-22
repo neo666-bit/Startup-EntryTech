@@ -1,0 +1,72 @@
+<div class="page">
+  <div class="breadcrumb">Nutricionistas <b>›</b> Dra. Marina Costa</div>
+  <section class="profile-hero">
+    <img [src]="marinaPhoto" alt="Dra. Marina Costa" />
+    <div>
+      <span>✓ Profissional verificada</span>
+      <h1>Dra. Marina Costa</h1>
+      <small>Nutricionista • CRN-3 58721</small>
+      <p>Emagrecimento sustentável, comportamento alimentar e saúde da mulher.</p>
+      <b>★ 4,9 <small>(128 avaliações)</small> · ▣ 9 anos de experiência</b>
+    </div>
+    <div class="price-box">
+      <strong>R$ 189</strong>
+      <small>Consulta online • 50 min</small>
+      <button class="btn btn-accent" routerLink="/schedule">▣ Ver horários</button>
+      <small>Próximo: hoje às 18:30</small>
+    </div>
+  </section>
+
+  <div class="profile-layout">
+    <div class="stack">
+      <section class="card">
+        <h2>Sobre a Marina</h2>
+        <p>
+          Acredito em uma nutrição que respeita sua história, seus afetos e a comida possível. Meu
+          trabalho é traduzir ciência em escolhas simples, sem listas proibitivas ou culpa.
+        </p>
+      </section>
+      <section class="card">
+        <h2>Como funciona o acompanhamento</h2>
+        <div class="three-cols">
+          @for (s of steps; track s.n) {
+            <div class="process">
+              <span>{{ s.n }}</span>
+              <b>{{ s.title }}</b>
+              <p>{{ s.text }}</p>
+            </div>
+          }
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-title">
+          <h2>O que pacientes dizem</h2>
+          <b>☆ 4,9 <small>(128 avaliações)</small></b>
+        </div>
+        @for (r of reviews; track r.author) {
+          <blockquote>
+            <b>{{ r.author }}</b>
+            <span>{{ r.when }}</span>
+            <p>{{ r.text }}</p>
+          </blockquote>
+        }
+      </section>
+    </div>
+
+    <div class="side-stack">
+      <section class="card">
+        <h3>Próximos horários</h3>
+        @for (s of slots; track s.day) {
+          <div class="schedule-line"><span>{{ s.day }}</span><b>{{ s.times }}</b></div>
+        }
+        <button class="btn btn-primary" routerLink="/schedule">Selecionar horário</button>
+      </section>
+      <section class="card credentials">
+        <h3>Formação e credenciais</h3>
+        @for (c of credentials; track c) {
+          <p>✓ {{ c }}</p>
+        }
+      </section>
+    </div>
+  </div>
+</div>

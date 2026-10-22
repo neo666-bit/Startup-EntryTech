@@ -1,0 +1,53 @@
+<div class="page confirmation">
+  <div class="success-icon">✓</div>
+  <span class="success-pill">Solicitação confirmada</span>
+  <h1>Agora seu plano tem<br />acompanhamento.</h1>
+  <p class="lead">
+    Sua consulta com a Dra. Marina Costa está agendada. Ela já poderá revisar o Plano Equilíbrio antes
+    do encontro.
+  </p>
+
+  <section class="card connection">
+    <div>
+      <span class="big-icon">⑂</span>
+      <small>Plano alimentar</small>
+      @if (plan(); as p) {
+        <strong>Plano Equilíbrio</strong>
+        <span>{{ fmtInt(p.summary.kcal) }} kcal • {{ p.profile.mealsPerDay }} refeições</span>
+      } @else {
+        <strong>Ainda não criado</strong>
+        <span>Crie sua dieta para compartilhar com a nutricionista</span>
+      }
+    </div>
+    <div class="connected">◇<span>Conectados</span></div>
+    <div>
+      <img [src]="marinaPhoto" alt="" />
+      <span>
+        <small>Nutricionista responsável</small>
+        <strong>Dra. Marina Costa</strong>
+        <small>CRN-3 58721 • Verificada</small>
+      </span>
+    </div>
+  </section>
+
+  <div class="confirmation-grid">
+    <section class="card">
+      <h2>Sua primeira consulta</h2>
+      <div class="summary-line"><span>▣ Data</span><b>Sexta, 02 de outubro</b></div>
+      <div class="summary-line"><span>◷ Horário</span><b>10:30–11:20</b></div>
+      <div class="summary-line"><span>▣ Modalidade</span><b>Videochamada na NutriSync</b></div>
+      <div class="reminder">♧ Enviaremos um lembrete por e-mail 24 horas antes.</div>
+    </section>
+    <section class="card">
+      <h2>Enquanto isso</h2>
+      <p>▣ Registre refeições e sinais de fome por 3 dias</p>
+      <p>◯ Envie dúvidas para Marina pelo chat</p>
+      <p>↗ Acompanhe peso, energia e treino no Progresso</p>
+    </section>
+  </div>
+
+  <div class="center-actions">
+    <button class="btn btn-primary" routerLink="/plan">⑂ Ver meu plano</button>
+    <button class="btn btn-outline" routerLink="/home">▦ Ir para o painel</button>
+  </div>
+</div>

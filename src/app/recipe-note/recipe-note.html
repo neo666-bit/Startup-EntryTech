@@ -1,0 +1,55 @@
+<div class="note-backdrop" role="presentation" (click)="closed.emit()">
+  <article
+    class="note"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'Receita: ' + meal().desc"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="note-head">
+      <div>
+        <small>{{ meal().label }} • {{ meal().time }}</small>
+        <h2>{{ meal().desc }}</h2>
+      </div>
+      <button #closeBtn class="note-close" (click)="closed.emit()" aria-label="Fechar receita">✕</button>
+    </header>
+
+    <div class="note-meta">
+      <span>⏱ ~{{ meal().prepMin }} min</span>
+      <span>{{ meal().kcal }} kcal</span>
+      <span>P {{ meal().protein }} g</span>
+      <span>C {{ meal().carbs }} g</span>
+      <span>G {{ meal().fat }} g</span>
+    </div>
+
+    @if (recipe(); as r) {
+      <h3>Ingredientes</h3>
+      <p class="note-sub">Quantidades aproximadas, ajustadas à sua porção.</p>
+      <ul class="note-list">
+        @for (line of items(); track $index) {
+          <li>{{ line }}</li>
+        }
+      </ul>
+
+      <h3>Modo de preparo</h3>
+      <ol class="note-steps">
+        @for (step of r.steps; track $index) {
+          <li>{{ step }}</li>
+        }
+      </ol>
+
+      @if (r.tip) {
+        <p class="note-tip">💡 {{ r.tip }}</p>
+      }
+    } @else {
+      <p>Este prato não tem receita cadastrada.</p>
+    }
+
+    <footer class="note-foot">
+      @if (moreUrl(); as url) {
+        <a [href]="url" target="_blank" rel="noopener noreferrer">Mais receitas parecidas no Tudo Gostoso ↗</a>
+      }
+      <small>Estimativas nutricionais; não substituem a orientação de um nutricionista.</small>
+    </footer>
+  </article>
+</div>

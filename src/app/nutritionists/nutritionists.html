@@ -1,0 +1,84 @@
+<div class="page">
+  <div class="eyebrow">Cuidado humano</div>
+  <h1>Encontre quem combina com você.</h1>
+  <p class="lead">
+    Profissionais verificados para revisar seu plano, acompanhar sua evolução e acolher sua rotina sem
+    julgamentos.
+  </p>
+
+  <div class="search-bar">
+    <span>⌕</span>
+    <input
+      [value]="search()"
+      (input)="onSearch($event)"
+      placeholder="Busque por nome, especialidade ou necessidade"
+    />
+    <span>▣ Consulta online</span>
+    <button class="btn btn-primary">Buscar</button>
+  </div>
+
+  <div class="directory">
+    <section class="card filters">
+      <div class="card-title">
+        <h3>Filtros</h3>
+        <button>Limpar</button>
+      </div>
+      @for (f of filters; track f.group) {
+        <div class="filter-group">
+          <b>{{ f.group }}</b>
+          @for (item of f.items; track item; let i = $index) {
+            <label><input type="checkbox" [checked]="i === 0" /> {{ item }}</label>
+          }
+        </div>
+      }
+    </section>
+
+    <div class="results">
+      <div class="results-head">
+        <b>{{ professionals().length }} profissionais encontrados</b>
+        <label class="field">
+          <select>
+            @for (o of sortOptions; track o) {
+              <option>{{ o }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @for (person of professionals(); track person.name) {
+        <section class="card professional" [class.best]="person.best">
+          <img [src]="person.image" [alt]="person.name" />
+          <div class="professional-main">
+            <h3>
+              {{ person.name }}
+              @if (person.best) {
+                <span>Melhor combinação</span>
+              }
+            </h3>
+            <small>CRN-3 58721 • Verificada</small>
+            <p>{{ person.area }}</p>
+            <b>★ 4,9 <small>(128 avaliações)</small></b>
+            <div class="chips">
+              <span class="chip">Online</span>
+              <span class="chip">Plano alimentar</span>
+              <span class="chip">Retorno incluso</span>
+            </div>
+          </div>
+          <div class="professional-price">
+            <strong>{{ person.price }}</strong>
+            <small>por consulta • 50 min</small>
+            <span>▣ Hoje, 18:30</span>
+            <button
+              class="btn"
+              [class.btn-primary]="person.best"
+              [class.btn-outline]="!person.best"
+              routerLink="/profile"
+            >
+              Ver perfil
+            </button>
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+</div>

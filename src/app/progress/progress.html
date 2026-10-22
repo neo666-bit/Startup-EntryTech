@@ -1,0 +1,74 @@
+<div class="page">
+  <div class="eyebrow">Sua evolução</div>
+  <h1>Progresso com contexto, não cobrança.</h1>
+  <p class="lead">
+    Registre seu peso ao longo do tempo e acompanhe a tendência. Um dia isolado nunca define sua jornada.
+  </p>
+
+  @if (plan(); as p) {
+    <div class="metrics-grid progress-metrics">
+      <section class="card">
+        <span>Peso atual</span>
+        <strong>{{ fmtDec(current() ?? 0) }} kg</strong>
+        <p>{{ changeText() }}</p>
+      </section>
+      <section class="card">
+        <span>Meta de peso</span>
+        <strong>{{ fmtDec(p.summary.targetWeightKg) }} kg</strong>
+        <p>{{ remainingText() }}</p>
+      </section>
+      <section class="card">
+        <span>Ritmo estimado</span>
+        <strong>{{ p.summary.weeklyRateKg > 0 ? fmtDec(p.summary.weeklyRateKg, 2) + ' kg/sem' : '—' }}</strong>
+        <p>{{ p.summary.weeksToGoal ? 'Cerca de ' + p.summary.weeksToGoal + ' semanas até a meta' : 'Sem previsão para este objetivo' }}</p>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-title">
+        <h2>Registrar peso de hoje</h2>
+      </div>
+      <div class="weight-form">
+        <label class="field">
+          <span>Peso (kg)</span>
+          <input #kg type="number" step="0.1" placeholder="Ex.: 73,5" (keydown.enter)="save(kg)" />
+        </label>
+        <button class="btn btn-primary" (click)="save(kg)">Salvar medida</button>
+      </div>
+      @if (error()) {
+        <small class="field-error">{{ error() }}</small>
+      }
+    </section>
+
+    <section class="card chart-card">
+      <div class="card-title">
+        <h2>Evolução do peso</h2>
+        <span class="success-pill">Últimas {{ bars().length }} medidas</span>
+      </div>
+      @if (bars().length > 1) {
+        <div class="chart">
+          @for (b of bars(); track $index) {
+            <i [style.height.%]="b.pct" [class.latest]="b.last" [title]="b.date + ': ' + fmtDec(b.kg) + ' kg'"></i>
+          }
+        </div>
+        <div class="chart-labels">
+          <span>{{ fmtDec(bars()[0].kg) }} kg</span>
+          <span>Meta: {{ fmtDec(p.summary.targetWeightKg) }} kg</span>
+          <b>{{ fmtDec(current() ?? 0) }} kg</b>
+        </div>
+      } @else {
+        <p>Registre pelo menos mais uma medida para ver o gráfico da sua evolução.</p>
+      }
+      <ul class="weight-history">
+        @for (w of history(); track w.date) {
+          <li><span>{{ dateText(w.date) }}</span><b>{{ fmtDec(w.kg) }} kg</b></li>
+        }
+      </ul>
+    </section>
+  } @else {
+    <app-empty-plan
+      title="Seu progresso começa com a sua dieta"
+      description="Depois de criar o plano, você registra seu peso por aqui e acompanha a evolução até a meta."
+    />
+  }
+</div>

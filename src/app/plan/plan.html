@@ -1,0 +1,144 @@
+<div class="page">
+  <div class="breadcrumb">Minha dieta @if (plan()) { <b>›</b> Plano Equilíbrio }</div>
+
+  @if (plan(); as p) {
+    <div class="eyebrow">Plano gerado em {{ createdLabel() }}</div>
+    <div class="title-actions">
+      <div>
+        <h1>Seu dia alimentar, do seu jeito.</h1>
+        <p class="lead">
+          {{ fmtInt(p.summary.kcal) }} kcal distribuídas em {{ mealCount() }} refeições, com preparo
+          {{ prepText() }} por refeição.
+        </p>
+      </div>
+      <div>
+        <button class="btn btn-outline" (click)="print()">⇩ Baixar PDF</button>
+        <button class="btn btn-outline" routerLink="/wizard">☷ Editar preferências</button>
+      </div>
+    </div>
+
+    @for (note of p.summary.notes; track note) {
+      <div class="warning plan-note">△ {{ note }}</div>
+    }
+
+    <div class="chips day-tabs" role="tablist" aria-label="Dia da semana">
+      @for (w of weekdays; track w) {
+        <button
+          class="chip"
+          role="tab"
+          [class.selected]="selectedWeekday() === w"
+          [attr.aria-selected]="selectedWeekday() === w"
+          (click)="selectDay(w)"
+        >
+          {{ weekdayShort(w) }}@if (w === today) { • hoje }
+        </button>
+      }
+    </div>
+
+    <div class="metrics-grid">
+      <section class="card energy">
+        <span>Meta diária</span>
+        <strong>{{ fmtInt(p.summary.kcal) }} <small>kcal</small></strong>
+        <p>{{ goalNote() }}</p>
+      </section>
+      <section class="card macro-card">
+        <div class="card-title">
+          <h3>Macronutrientes</h3>
+          <small>Neste dia • meta entre parênteses</small>
+        </div>
+        @for (m of macros(); track m.name) {
+          <div class="macro">
+            <div>
+              <span>{{ m.name }}</span>
+              <b>{{ m.grams }} g · {{ m.pct }}% ({{ m.target }} g)</b>
+            </div>
+            <i [class]="m.cls" [style.width.%]="m.pct"></i>
+          </div>
+        }
+      </section>
+      <section class="card focus">
+        <h3>Foco desta semana</h3>
+        <p>✓ {{ fmtDec(waterLiters()) }} L de água ao longo do dia</p>
+        <p>✓ Vegetais no almoço e jantar</p>
+        <p>✓ Proteína em todas as refeições</p>
+      </section>
+    </div>
+
+    <div class="plan-columns">
+      <div>
+        <div class="section-title">
+          <h2>{{ dayTitle() }}</h2>
+          <span>{{ dayPill() }}</span>
+        </div>
+        <div class="meal-list">
+          @for (meal of day()?.meals ?? []; track meal.slot; let i = $index) {
+            <div
+              class="meal"
+              role="button"
+              tabindex="0"
+              [class.expanded]="selectedMeal() === i"
+              (click)="toggleMeal(i)"
+              (keydown.enter)="toggleMeal(i)"
+            >
+              <img [src]="imageUrl(meal.image)" alt="" />
+              <span class="meal-copy">
+                <small>{{ meal.time }}</small>
+                <strong>{{ meal.label }}@if (meal.fromPhoto) { <em class="badge">Registrado por foto</em> }</strong>
+                <span>{{ meal.desc }}</span>
+                @if (selectedMeal() === i) {
+                  <em>P {{ meal.protein }} g · C {{ meal.carbs }} g · G {{ meal.fat }} g · porção ×{{ fmtDec(meal.factor, 2) }}</em>
+                  <em>Ingredientes: {{ meal.ingredients.join(', ') }} · preparo ~{{ meal.prepMin }} min</em>
+                  <span class="meal-actions">
+                    @if (hasRecipe(meal.optionId)) {
+                      <button class="btn btn-accent swap-btn" (click)="openRecipe(meal, $event)">
+                        📖 Ver receita
+                      </button>
+                    }
+                    @if (!meal.fromPhoto) {
+                      <button class="btn btn-outline swap-btn" (click)="swap(i, $event)">↻ Trocar por outra opção</button>
+                    }
+                  </span>
+                }
+              </span>
+              <span class="meal-kcal">
+                {{ meal.kcal }} kcal
+                <b>{{ selectedMeal() === i ? 'Fechar' : 'Ver detalhes' }}</b>
+              </span>
+            </div>
+          }
+        </div>
+        <p class="disclaimer">
+          Valores nutricionais são estimativas e não substituem a avaliação de um nutricionista.
+        </p>
+      </div>
+
+      <div class="side-stack">
+        @if (swaps().length) {
+          <section class="card">
+            <div class="card-title">
+              <h3>Trocas rápidas</h3>
+              <button aria-label="Trocas">↻</button>
+            </div>
+            <p>Sem algum ingrediente? Mantenha o equilíbrio com estas trocas.</p>
+            <ul>
+              @for (s of swaps(); track s.from) {
+                <li>{{ s.from }}<br /><b>→ {{ s.to.join(' ou ') }}</b></li>
+              }
+            </ul>
+          </section>
+        }
+        <section class="card accent-side">
+          <h3>Registre o que você comeu</h3>
+          <p>Uma foto ajuda a ajustar o plano à sua rotina real.</p>
+          <button class="btn btn-accent" routerLink="/photo">Analisar meu prato</button>
+        </section>
+      </div>
+    </div>
+  } @else {
+    <app-empty-plan />
+  }
+
+  @if (recipeMeal(); as m) {
+    <app-recipe-note [meal]="m" (closed)="recipeMeal.set(null)" />
+  }
+</div>

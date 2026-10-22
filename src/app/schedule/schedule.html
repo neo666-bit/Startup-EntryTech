@@ -1,0 +1,82 @@
+<div class="page">
+  <div class="breadcrumb">Perfil de Marina Costa <b>›</b> Agendar consulta</div>
+  <div class="eyebrow">Primeiro encontro</div>
+  <h1>Escolha um bom momento para conversar.</h1>
+  <p class="lead">
+    A Dra. Marina receberá seu plano alimentar e suas preferências antes da consulta, com sua autorização.
+  </p>
+
+  <div class="booking-grid">
+    <section class="card calendar">
+      <div class="calendar-head">
+        <button>‹</button>
+        <h2>Outubro de 2026</h2>
+        <button>›</button>
+      </div>
+      <div class="week">
+        @for (d of weekDays; track d) {
+          <b>{{ d }}</b>
+        }
+      </div>
+      <div class="days">
+        @for (day of days; track day) {
+          <button
+            [class.selected]="date() === day"
+            [class.available]="date() !== day && day < 9"
+            (click)="date.set(day)"
+          >
+            {{ day }}
+          </button>
+        }
+      </div>
+      <div class="legend">Disponível <span>● Selecionado</span></div>
+    </section>
+
+    <section class="card time-card">
+      <h2>Sex, {{ pad(date()) }} de outubro</h2>
+      <p>Horário de Brasília (GMT-3)</p>
+      <h3>Manhã</h3>
+      <div class="time-options">
+        @for (t of morning; track t) {
+          <button [class.selected]="time() === t" (click)="time.set(t)">
+            @if (time() === t) { ✓ }{{ t }}
+          </button>
+        }
+      </div>
+      <h3>Tarde</h3>
+      <div class="time-options">
+        @for (t of afternoon; track t) {
+          <button [class.selected]="time() === t" (click)="time.set(t)">{{ t }}</button>
+        }
+      </div>
+    </section>
+
+    <div class="side-stack booking-side">
+      <section class="card booking-summary">
+        <div class="doctor-mini">
+          <img [src]="marinaPhoto" alt="" />
+          <div><b>Dra. Marina Costa</b><small>CRN-3 58721</small></div>
+        </div>
+        <div class="summary-line"><span>▣ Data</span><b>Sex, {{ pad(date()) }} out</b></div>
+        <div class="summary-line"><span>◷ Horário</span><b>{{ time() }}–11:20</b></div>
+        <div class="summary-line"><span>▣ Modalidade</span><b>Online</b></div>
+        <div class="summary-line"><span>▤ Valor</span><b>R$ 189</b></div>
+      </section>
+      <section class="card">
+        <label class="field">
+          <span>Motivo principal</span>
+          <select>
+            @for (r of reasons; track r) {
+              <option>{{ r }}</option>
+            }
+          </select>
+        </label>
+        <h3>Compartilhar com Marina</h3>
+        @for (s of shares; track s; let i = $index) {
+          <label class="check-row"><input type="checkbox" [checked]="i < 2" />{{ s }}</label>
+        }
+        <button class="btn btn-accent" routerLink="/confirmed">◇ Solicitar acompanhamento</button>
+      </section>
+    </div>
+  </div>
+</div>

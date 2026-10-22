@@ -1,0 +1,194 @@
+<div class="page">
+  <div class="breadcrumb">Análise por foto @if (plan()) { <b>›</b> Plano Equilíbrio }</div>
+
+  @if (plan()) {
+    <div class="eyebrow">Seu prato, no seu plano</div>
+    <h1>{{ title() }}</h1>
+    <p class="lead">{{ lead() }}</p>
+
+    <div class="analysis-stepper">
+      @for (name of stepNames; track name; let i = $index) {
+        <div [class.done]="i + 1 <= stage()">
+          <span>{{ i + 1 < stage() ? '✓' : i + 1 }}</span>{{ name }}
+        </div>
+      }
+    </div>
+
+    @switch (stage()) {
+      @case (1) {
+        <div class="photo-start">
+          <section class="card">
+            <h2>Comece com uma foto</h2>
+            <p>Use a câmera do aparelho ou escolha uma imagem da sua galeria.</p>
+            <div class="drop-zone">
+              <span class="camera-icon">▣</span>
+              <h3>Seu próximo prato começa aqui</h3>
+              <div>
+                <button class="btn btn-accent" (click)="camera.click()">▣ Tirar foto</button>
+                <button class="btn btn-outline" (click)="gallery.click()">↥ Enviar imagem</button>
+                <input #camera type="file" accept="image/*" capture="environment" hidden (change)="onFile($event)" />
+                <input #gallery type="file" accept="image/*" hidden (change)="onFile($event)" />
+              </div>
+              <small>JPG, PNG ou HEIC • até 10 MB</small>
+              @if (photoError()) {
+                <small class="field-error">{{ photoError() }}</small>
+              }
+            </div>
+            <small>ⓘ A câmera só é ativada com sua permissão. A foto fica só no seu aparelho.</small>
+          </section>
+          <section class="card photo-tips">
+            <h2>Uma boa foto faz diferença</h2>
+            <img [src]="tipsPhoto" alt="Exemplo de uma boa foto de refeição" />
+            <p>☼ <b>Prefira luz natural</b><br />Evite sombras fortes, flash e imagens desfocadas.</p>
+            <p>⌗ <b>Enquadre o prato inteiro</b><br />Fotografe de cima, sem cortar as bordas.</p>
+            <p>⑂ <b>Deixe os alimentos à vista</b><br />Separe os itens antes de começar a comer.</p>
+          </section>
+        </div>
+      }
+
+      @case (2) {
+        <div class="photo-review">
+          <section class="card">
+            @if (photoUrl()) {
+              <img class="review-photo" [src]="photoUrl()!" alt="Foto do seu prato" />
+            }
+            <span class="success-pill">Foto registrada</span>
+            <h2>{{ photoName() }}</h2>
+            <p>Hoje • {{ todayLabel }}</p>
+          </section>
+          <section class="card">
+            <div class="card-title">
+              <h2>Alimentos e porções</h2>
+              <small>{{ items().length }} itens • editáveis</small>
+            </div>
+            @for (item of items(); track item.food.id; let i = $index) {
+              <div class="food-row">
+                <span><b>{{ item.food.name }}</b><small>Referência: {{ item.food.unit }}</small></span>
+                <label>
+                  <input type="number" min="0" max="2000" [value]="item.grams" (input)="setGrams(i, $event)" /> g
+                </label>
+                <b>{{ itemKcal(item) }} kcal</b>
+                <button (click)="removeFood(i)" aria-label="Remover alimento">⌫</button>
+              </div>
+            }
+            <label class="field add-food">
+              <span>Adicionar alimento</span>
+              <select (change)="addFood($event)">
+                <option value="">Selecione…</option>
+                @for (f of foodOptions; track f.id) {
+                  <option [value]="f.id" [disabled]="items().some(i => i.food.id === f.id)">{{ f.name }}</option>
+                }
+              </select>
+            </label>
+          </section>
+        </div>
+        <section class="card total-card">
+          <div class="card-title">
+            <h3>Total estimado do prato</h3>
+            <span class="success-pill">Calculado pelas suas porções</span>
+          </div>
+          <div class="total-metrics">
+            <div><span>Energia</span><strong>{{ fmtInt(plate().kcal) }} <small>kcal</small></strong></div>
+            <div><span>Proteínas</span><strong>{{ plate().protein }} <small>g</small></strong></div>
+            <div><span>Carboidratos</span><strong>{{ plate().carbs }} <small>g</small></strong></div>
+            <div><span>Gorduras</span><strong>{{ plate().fat }} <small>g</small></strong></div>
+          </div>
+        </section>
+        <div class="analysis-actions">
+          <button class="btn btn-outline" (click)="restart()">Trocar foto</button>
+          <button class="btn btn-accent" [disabled]="!canContinue()" (click)="toSwap()">
+            → Escolher refeição para substituir
+          </button>
+        </div>
+      }
+
+      @case (3) {
+        <div class="swap-layout">
+          <section class="card">
+            <h2>Refeições planejadas</h2>
+            <span class="success-pill">Hoje • {{ todayLabel }}</span>
+            <div class="swap-meals">
+              @for (meal of today()?.meals ?? []; track meal.slot) {
+                <button [class.selected]="targetSlot() === meal.slot" (click)="targetSlot.set(meal.slot)">
+                  <span><b>{{ meal.label }}</b><small>{{ meal.time }}</small></span>
+                  <span>{{ meal.kcal }} kcal</span>
+                  <small>{{ meal.desc }}</small>
+                </button>
+              }
+            </div>
+          </section>
+          @if (selectedMeal(); as meal) {
+            <div class="stack">
+              <section class="card">
+                <div class="card-title">
+                  <h2>{{ meal.label }} • {{ meal.time }}</h2>
+                  <span class="success-pill">Substituição</span>
+                </div>
+                <div class="meal-compare">
+                  <div>
+                    <small>Sai do plano de hoje</small>
+                    <b>{{ meal.desc }}</b>
+                    <span>{{ meal.kcal }} kcal • P {{ meal.protein }} g • C {{ meal.carbs }} g • G {{ meal.fat }} g</span>
+                  </div>
+                  <div>
+                    <small>Entra no lugar</small>
+                    @if (photoUrl()) {
+                      <img [src]="photoUrl()!" alt="Prato fotografado" />
+                    }
+                    <b>{{ plateTitle() }}</b>
+                    <span>≈ {{ plate().kcal }} kcal • P {{ plate().protein }} g • C {{ plate().carbs }} g • G {{ plate().fat }} g</span>
+                  </div>
+                </div>
+              </section>
+              <section class="card">
+                <h2>Como fica o seu dia</h2>
+                @for (row of comparison(); track row.label) {
+                  <div class="comparison-row">
+                    <span>{{ row.label }}</span>
+                    <span>{{ row.before }}</span>
+                    <span>{{ row.after }}</span>
+                    <span class="difference">{{ row.diff }}</span>
+                  </div>
+                }
+              </section>
+            </div>
+          }
+        </div>
+        <div class="analysis-actions">
+          <button class="btn btn-ghost" (click)="stage.set(2)">← Voltar ao prato</button>
+          <button class="btn btn-accent" [disabled]="!selectedMeal()" (click)="confirm()">
+            ⟳ Confirmar substituição
+          </button>
+        </div>
+      }
+
+      @case (4) {
+        <div class="success-banner">
+          ✓ <b>{{ selectedMeal()?.label }} substituído com sucesso</b>
+          <button (click)="undo()">Desfazer troca</button>
+        </div>
+        <section class="card updated-total">
+          <div class="card-title">
+            <h3>Totais de hoje após a troca</h3>
+            <span class="success-pill">Inclui o prato registrado</span>
+          </div>
+          <div class="total-metrics">
+            <div><span>Energia</span><strong>{{ fmtInt(today()?.kcal ?? 0) }} <small>kcal</small></strong></div>
+            <div><span>Proteínas</span><strong>{{ today()?.protein }} <small>g</small></strong></div>
+            <div><span>Carboidratos</span><strong>{{ today()?.carbs }} <small>g</small></strong></div>
+            <div><span>Gorduras</span><strong>{{ today()?.fat }} <small>g</small></strong></div>
+          </div>
+        </section>
+        <div class="analysis-actions">
+          <button class="btn btn-outline" (click)="restart()">▣ Analisar outro prato</button>
+          <button class="btn btn-primary" routerLink="/plan">⑂ Ver Minha dieta</button>
+        </div>
+      }
+    }
+  } @else {
+    <app-empty-plan
+      title="Crie sua dieta para registrar pratos"
+      description="A análise por foto compara o seu prato com o plano do dia. Primeiro, a NutriSync precisa montar o seu plano."
+    />
+  }
+</div>

@@ -1,0 +1,66 @@
+<div class="page home-page">
+  @if (plan(); as p) {
+    <div class="home-kicker">
+      <span>Plano ativo</span>
+      <small>Hoje • {{ todayLabel }}</small>
+    </div>
+    <div class="hero">
+      <div class="hero-copy">
+        <span class="hero-pill">Seu plano de hoje</span>
+        <div class="eyebrow">Meta diária</div>
+        <h1>{{ fmtInt(p.summary.kcal) }} kcal para o seu dia.</h1>
+        <p>
+          Peso atual: {{ fmtDec(weight() ?? p.profile.weightKg) }} kg · IMC {{ fmtDec(p.summary.bmi) }}.
+          {{ p.summary.macroTargets.protein }} g de proteína, {{ p.summary.macroTargets.carbs }} g de
+          carboidratos e {{ p.summary.macroTargets.fat }} g de gorduras.
+        </p>
+        <div class="hero-action">
+          <button class="btn btn-accent" routerLink="/plan">⑂ Ver minha dieta</button>
+          <button class="btn btn-outline" routerLink="/wizard">☷ Refazer plano</button>
+        </div>
+      </div>
+      <img [src]="foodPhoto" alt="Refeição saudável" />
+    </div>
+    @if (today(); as d) {
+      <div class="feature-grid">
+        @for (m of d.meals.slice(0, 3); track m.slot) {
+          <section class="card">
+            <span class="feature-icon">{{ m.time }}</span>
+            <strong>{{ m.label }}</strong>
+            <p>{{ m.desc }}</p>
+          </section>
+        }
+      </div>
+    }
+  } @else {
+    <div class="home-kicker">
+      <span>Plano ainda não gerado</span>
+      <small>Leva cerca de 4 minutos</small>
+    </div>
+    <div class="hero">
+      <div class="hero-copy">
+        <span class="hero-pill">Feito para a sua rotina</span>
+        <div class="eyebrow">Seu novo ponto de partida</div>
+        <h1>Uma alimentação possível, gostosa e só sua.</h1>
+        <p>
+          Conte sobre seus objetivos, rotina e preferências. A NutriSync transforma essas informações em um
+          plano claro, flexível e conectado à vida real.
+        </p>
+        <div class="hero-action">
+          <button class="btn btn-accent" routerLink="/wizard">✦ Criar minha dieta</button>
+          <small>Seus dados de saúde ficam protegidos.</small>
+        </div>
+      </div>
+      <img [src]="foodPhoto" alt="Refeição saudável com arroz, frango e vegetais" />
+    </div>
+    <div class="feature-grid">
+      @for (f of features; track f.title) {
+        <section class="card">
+          <span class="feature-icon">{{ f.icon }}</span>
+          <strong>{{ f.title }}</strong>
+          <p>{{ f.description }}</p>
+        </section>
+      }
+    </div>
+  }
+</div>

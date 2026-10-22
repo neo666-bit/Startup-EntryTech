@@ -1,0 +1,47 @@
+<div class="nutrisync">
+  <div class="app">
+    <header class="topbar">
+      <button class="brand" routerLink="/home" aria-label="Ir para o painel">
+        <span class="brand-mark">◇</span>
+        <strong>NutriSync</strong>
+      </button>
+      <div class="top-actions">
+        <button class="help">ⓘ <span>Precisa de ajuda?</span></button>
+        <button class="notification" aria-label="Notificações">♧</button>
+        <img [src]="marinaPhoto" alt="Seu perfil" />
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <nav>
+        @for (item of nav; track item.path) {
+          <button
+            class="nav-item"
+            [class.active]="active() === item.path"
+            [routerLink]="item.path"
+          >
+            <span>{{ item.icon }}</span>
+            {{ item.label }}
+          </button>
+        }
+      </nav>
+      @if (diet.hasPlan()) {
+        <div class="plan-mini">
+          <div><strong>Plano Equilíbrio</strong><span>☼</span></div>
+          <p>{{ diet.goalText() }}</p>
+          <div class="profile-line"><span>Meta de peso</span><b>{{ diet.goalProgress() }}%</b></div>
+          <div class="mini-progress"><i [style.width.%]="diet.goalProgress()"></i></div>
+        </div>
+      } @else {
+        <div class="plan-mini">
+          <div><strong>Sem plano ainda</strong><span>☼</span></div>
+          <p>Crie sua dieta para ver sua meta e acompanhar seu progresso.</p>
+        </div>
+      }
+    </aside>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
