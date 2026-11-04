@@ -1,10 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-
-const API_URL = 'https://69ec4ad897482ad5c528424e.mockapi.io/usuario';
-const LOCAL_USERS_KEY = 'nutrisync.usuarios.v1';
-const SESSION_KEY = 'nutrisync.sessao.v1';
+import { DietService } from '../../../nutrisync/diet.service';
+import { SupabaseService } from '../../../nutrisync/supabase.service';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +12,8 @@ const SESSION_KEY = 'nutrisync.sessao.v1';
 })
 export class Login {
   private readonly router = inject(Router);
+  private readonly supabase = inject(SupabaseService);
+  private readonly diet = inject(DietService);
 
   readonly email = signal('');
   readonly senha = signal('');
@@ -42,54 +42,17 @@ export class Login {
 
     this.carregando.set(true);
     try {
-      let usuarioEncontrado: { nome?: string; email: string } | undefined;
-
-      // 1. Verifica usuários salvos localmente
-      const locais = this.lerUsuariosLocais();
-      usuarioEncontrado = locais.find(
-        (u) => u.email.toLowerCase() === emailLimpo && u.password === senhaVal,
-      );
-
-      // 2. Consulta o MockAPI do projeto caso não esteja apenas local
-      if (!usuarioEncontrado) {
-        try {
-          const resposta = await fetch(API_URL);
-          if (resposta.ok) {
-            const todosUsuarios: Array<{ nome?: string; email?: string; password?: string }> =
-              await resposta.json();
-            usuarioEncontrado = todosUsuarios.find(
-              (u) => (u.email ?? '').toLowerCase() === emailLimpo && u.password === senhaVal,
-            ) as { nome?: string; email: string } | undefined;
-          }
-        } catch {
-          // Se estiver sem internet ou a API falhar, permite seguir pelo fallback
-        }
-      }
-
-      if (!usuarioEncontrado) {
-        this.erro.set('E-mail ou senha incorretos. Verifique seus dados ou crie uma conta.');
+      const usuarioPg = await this.supabase.buscarUsuarioPorEmail(emailLimpo);
+      if (!usuarioPg || usuarioPg.senha_hash !== senhaVal) {
+        this.erro.set('E-mail ou senha incorretos no banco de dados. Verifique seus dados ou crie uma conta.');
         return;
       }
 
-      localStorage.setItem(
-        SESSION_KEY,
-        JSON.stringify({
-          nome: usuarioEncontrado.nome ?? emailLimpo.split('@')[0],
-          email: emailLimpo,
-        }),
-      );
+      this.supabase.definirEmailSessao(usuarioPg.email);
+      await this.diet.carregarDoBanco(usuarioPg.email);
       await this.router.navigateByUrl('/home');
     } finally {
       this.carregando.set(false);
-    }
-  }
-
-  private lerUsuariosLocais(): Array<{ nome?: string; email: string; password?: string }> {
-    try {
-      const raw = localStorage.getItem(LOCAL_USERS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
     }
   }
 }

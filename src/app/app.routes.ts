@@ -16,8 +16,8 @@ import { LayoutPaciente } from './components/paciente/estrutura/layout-paciente/
 import { Painel } from './components/paciente/paginas/painel/painel';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'inicio', component: LandingPage },
+  { path: '', component: LandingPage, pathMatch: 'full' },
+  { path: 'inicio', redirectTo: '', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'registrar', component: Registrar },
   {
@@ -43,5 +43,5 @@ export const routes: Routes = [
       { path: 'painel', component: Painel },
     ],
   },
-  { path: '**', redirectTo: 'home' },
+  { path: '**', redirectTo: '' },
 ];

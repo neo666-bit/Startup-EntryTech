@@ -2,14 +2,15 @@ import { Injectable, computed, signal } from '@angular/core';
 import { buildMeal, generatePlan, lunchNeedsPortable, rankOptions, totalsOf } from './diet-generator';
 import { DayPlan, DietPlan, PlannedMeal, Slot, UserProfile } from './models';
 import { fmtDec } from './format';
-
-const STORAGE_KEY = 'nutrisync.plan.v1';
+import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
 export class DietService {
-  private readonly state = signal<DietPlan | null>(this.load());
+  private readonly supabase = new SupabaseService();
+  private readonly state = signal<DietPlan | null>(null);
+  readonly carregandoBanco = signal(false);
 
-  /** `null` enquanto a pessoa ainda não criou a dieta. */
+  /** `null` enquanto a pessoa ainda não criou a dieta no banco de dados. */
   readonly plan = this.state.asReadonly();
   readonly hasPlan = computed(() => this.state() !== null);
 
@@ -42,9 +43,32 @@ export class DietService {
     return Math.max(0, Math.min(100, Math.round(((now - start) / total) * 100)));
   });
 
+  constructor() {
+    this.supabase.limparDadosLocaisAntigos();
+    void this.carregarDoBanco();
+  }
+
+  /** Busca o plano alimentar ativo do usuário diretamente no PostgreSQL (Supabase). */
+  async carregarDoBanco(email?: string | null): Promise<void> {
+    const alvo = email !== undefined ? email : this.supabase.lerEmailSessao();
+    if (!alvo) {
+      this.state.set(null);
+      return;
+    }
+    this.carregandoBanco.set(true);
+    try {
+      const planoBanco = await this.supabase.carregarPlanoDoBanco(alvo);
+      this.state.set(planoBanco);
+    } finally {
+      this.carregandoBanco.set(false);
+    }
+  }
+
   generate(profile: UserProfile): DietPlan {
     const plan = generatePlan(profile, new Date(), this.state()?.weights ?? []);
-    this.set({ ...plan, overrides: {} });
+    const novoPlano: DietPlan = { ...plan, overrides: {} };
+    this.state.set(novoPlano);
+    void this.supabase.sincronizarPlanoAlimentar(novoPlano);
     return this.state()!;
   }
 
@@ -67,10 +91,12 @@ export class DietService {
     const next = ranked[(at + 1) % ranked.length];
     const meals = day.meals.map((m, i) => (i === mealIndex ? buildMeal(next, current.slot, current.targetKcal) : m));
 
-    this.set({
+    const atualizado: DietPlan = {
       ...plan,
       days: plan.days.map((d) => (d.weekday === weekday ? totalsOf(weekday, meals) : d)),
-    });
+    };
+    this.state.set(atualizado);
+    void this.supabase.sincronizarPlanoAlimentar(atualizado);
   }
 
   /** Data (AAAA-MM-DD) em que o dia da semana cai na semana atual (domingo a sábado). */
@@ -96,7 +122,7 @@ export class DietService {
     if (!plan) return;
     const key = this.dateOfWeekday(new Date().getDay());
     const rest = (plan.overrides?.[key] ?? []).filter((m) => m.slot !== slot);
-    this.set({ ...plan, overrides: { [key]: [...rest, { ...meal, slot, fromPhoto: true }] } });
+    this.state.set({ ...plan, overrides: { [key]: [...rest, { ...meal, slot, fromPhoto: true }] } });
   }
 
   undoReplaceToday(slot: Slot): void {
@@ -104,42 +130,19 @@ export class DietService {
     if (!plan) return;
     const key = this.dateOfWeekday(new Date().getDay());
     const rest = (plan.overrides?.[key] ?? []).filter((m) => m.slot !== slot);
-    this.set({ ...plan, overrides: rest.length ? { [key]: rest } : {} });
+    this.state.set({ ...plan, overrides: rest.length ? { [key]: rest } : {} });
   }
 
   addWeight(kg: number): boolean {
     const plan = this.state();
     if (!plan || !Number.isFinite(kg) || kg < 30 || kg > 300) return false;
-    this.set({ ...plan, weights: [...plan.weights, { date: new Date().toISOString(), kg }] });
+    this.state.set({ ...plan, weights: [...plan.weights, { date: new Date().toISOString(), kg }] });
+    void this.supabase.registrarPesoNoBanco(kg);
     return true;
   }
 
   reset(): void {
     this.state.set(null);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* armazenamento indisponível */
-    }
-  }
-
-  private set(plan: DietPlan): void {
-    this.state.set(plan);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
-    } catch {
-      /* armazenamento indisponível: o plano segue válido só nesta sessão */
-    }
-  }
-
-  private load(): DietPlan | null {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      const plan = JSON.parse(raw) as DietPlan;
-      return plan.version === 1 && Array.isArray(plan.days) && plan.days.length === 7 ? plan : null;
-    } catch {
-      return null;
-    }
+    void this.supabase.desativarPlanoNoBanco();
   }
 }

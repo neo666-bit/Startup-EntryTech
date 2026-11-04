@@ -160,4 +160,26 @@ describe('troca por foto vale só para hoje', () => {
     diet.generate(baseProfile);
     expect(diet.dayOn(new Date().getDay())!.meals.some((m) => m.fromPhoto)).toBe(false);
   });
+
+  it('botão do usuário no cabeçalho abre menu com Configurações, Planos e Suporte', async () => {
+    const f = TestBed.createComponent(AppShell);
+    const el = f.nativeElement as HTMLElement;
+    await f.whenStable();
+
+    const trigger = el.querySelector<HTMLButtonElement>('.user-trigger')!;
+    expect(trigger).toBeTruthy();
+    trigger.click();
+    await f.whenStable();
+
+    const dropdown = el.querySelector<HTMLElement>('.user-dropdown')!;
+    expect(dropdown).toBeTruthy();
+    expect(dropdown.textContent).toContain('Configurações');
+    expect(dropdown.textContent).toContain('Planos');
+    expect(dropdown.textContent).toContain('Suporte');
+
+    const items = Array.from(dropdown.querySelectorAll<HTMLButtonElement>('.user-dropdown-item'));
+    items[0].click(); // Configurações
+    await f.whenStable();
+    expect(el.querySelector('.user-modal')?.textContent).toContain('Escolher foto do aparelho');
+  });
 });

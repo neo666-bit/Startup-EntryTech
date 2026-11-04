@@ -168,6 +168,20 @@
           </label>
         </div>
 
+        <div class="campo">
+          <span>Foto de perfil — arquivo PNG ou JPG (opcional)</span>
+          <input
+            type="file"
+            accept=".png,.jpg,.jpeg,image/png,image/jpeg,image/webp"
+            (change)="selecionarFotoArquivo($event)"
+          />
+          @if (fotoNome()) {
+            <small style="color: #1f5c3f; font-weight: 600">
+              <i class="bi bi-check-circle-fill"></i> Arquivo selecionado: {{ fotoNome() }}
+            </small>
+          }
+        </div>
+
         <label class="check-termos">
           <input
             type="checkbox"

@@ -1,10 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-
-const API_URL = 'https://69ec4ad897482ad5c528424e.mockapi.io/usuario';
-const LOCAL_USERS_KEY = 'nutrisync.usuarios.v1';
-const SESSION_KEY = 'nutrisync.sessao.v1';
+import { DietService } from '../../../nutrisync/diet.service';
+import { SupabaseService } from '../../../nutrisync/supabase.service';
 
 @Component({
   selector: 'app-registrar',
@@ -14,6 +12,8 @@ const SESSION_KEY = 'nutrisync.sessao.v1';
 })
 export class Registrar {
   private readonly router = inject(Router);
+  private readonly supabase = inject(SupabaseService);
+  private readonly diet = inject(DietService);
 
   readonly nome = signal('');
   readonly email = signal('');
@@ -24,6 +24,9 @@ export class Registrar {
   readonly confirmar = signal('');
   readonly mostrarSenha = signal(false);
   readonly aceitouTermos = signal(true);
+  readonly fotoBase64 = signal<string | null>(null);
+  readonly fotoMime = signal<string | null>(null);
+  readonly fotoNome = signal<string>('');
 
   readonly carregando = signal(false);
   readonly erro = signal('');
@@ -37,6 +40,34 @@ export class Registrar {
 
   alternarSenha(): void {
     this.mostrarSenha.set(!this.mostrarSenha());
+  }
+
+  selecionarFotoArquivo(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    const permitidos = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!permitidos.includes(file.type)) {
+      this.erro.set('Selecione um arquivo de foto no formato .PNG ou .JPG.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      this.erro.set('A foto deve ter no máximo 4 MB.');
+      return;
+    }
+
+    this.erro.set('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        this.fotoBase64.set(reader.result);
+        this.fotoMime.set(file.type);
+        this.fotoNome.set(file.name);
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   async verificarSenha(): Promise<void> {
@@ -81,64 +112,35 @@ export class Registrar {
 
     this.carregando.set(true);
     try {
-      const locais = this.lerUsuariosLocais();
-      if (locais.some((u) => u.email.toLowerCase() === email)) {
-        this.erro.set('Este e-mail já está cadastrado. Tente entrar na sua conta.');
+      const existentePg = await this.supabase.buscarUsuarioPorEmail(email);
+      if (existentePg) {
+        this.erro.set('Este e-mail já está cadastrado no banco de dados. Tente entrar na sua conta.');
         return;
       }
 
-      try {
-        const resposta = await fetch(API_URL);
-        if (resposta.ok) {
-          const todosUsuarios: Array<{ email?: string }> = await resposta.json();
-          const emailEncontrado = todosUsuarios.find(
-            (usuario) => (usuario.email ?? '').toLowerCase() === email,
-          );
-          if (emailEncontrado) {
-            this.erro.set('Este e-mail já está cadastrado. Tente entrar na sua conta.');
-            return;
-          }
+      const criado = await this.supabase.cadastrarUsuario({
+        nome,
+        email,
+        senha,
+        telefone,
+        estado,
+        perfil: this.perfil(),
+        fotoBase64: this.fotoBase64(),
+        fotoMime: this.fotoMime(),
+      });
 
-          await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email,
-              password: senha,
-              estado,
-              telefone,
-              nome,
-              perfil: this.perfil(),
-            }),
-          });
-        }
-      } catch {
-        // Caso o MockAPI esteja indisponível, o cadastro segue salvo localmente
+      if (!criado) {
+        this.erro.set('Não foi possível salvar o cadastro no banco de dados. Tente novamente.');
+        return;
       }
 
-      const novoUsuario = { email, password: senha, estado, telefone, nome, perfil: this.perfil() };
-      localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify([...locais, novoUsuario]));
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ nome, email, perfil: this.perfil() }));
+      this.supabase.definirEmailSessao(criado.email);
+      await this.diet.carregarDoBanco(criado.email);
 
-      this.sucesso.set('Conta criada com sucesso! Redirecionando para o seu plano...');
+      this.sucesso.set('Conta criada no banco com sucesso! Redirecionando para o seu plano...');
       await this.router.navigateByUrl('/montar-dieta');
     } finally {
       this.carregando.set(false);
-    }
-  }
-
-  private lerUsuariosLocais(): Array<{
-    email: string;
-    password?: string;
-    nome?: string;
-    estado?: string;
-    telefone?: string;
-  }> {
-    try {
-      const raw = localStorage.getItem(LOCAL_USERS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
     }
   }
 }

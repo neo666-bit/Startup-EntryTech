@@ -1,6 +1,15 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { marinaPhoto, secondProfessional } from '../nutrisync-data';
+import { SupabaseService } from '../nutrisync/supabase.service';
+
+interface ProfessionalCard {
+  name: string;
+  area: string;
+  price: string;
+  image: string;
+  best: boolean;
+}
 
 @Component({
   selector: 'app-nutricionistas',
@@ -9,16 +18,12 @@ import { marinaPhoto, secondProfessional } from '../nutrisync-data';
   styleUrl: './nutricionistas.css',
 })
 export class Nutricionistas {
+  private readonly supabase = inject(SupabaseService);
   protected readonly search = signal('');
-
-  private readonly all = [
-    { name: 'Dra. Marina Costa', area: 'Emagrecimento sustentável · Comportamental', price: 'R$ 189', image: marinaPhoto, best: true },
-    { name: 'Dr. Rafael Nogueira', area: 'Nutrição esportiva · Hipertrofia', price: 'R$ 210', image: secondProfessional, best: false },
-    { name: 'Dra. Camila Azevedo', area: 'Saúde da mulher · Intolerâncias', price: 'R$ 175', image: marinaPhoto, best: false },
-  ];
+  private readonly listFromDb = signal<ProfessionalCard[]>([]);
 
   protected readonly professionals = computed(() =>
-    this.all.filter((p) => p.name.toLowerCase().includes(this.search().toLowerCase())),
+    this.listFromDb().filter((p) => p.name.toLowerCase().includes(this.search().toLowerCase())),
   );
 
   protected readonly filters = [
@@ -29,6 +34,23 @@ export class Nutricionistas {
   ];
 
   protected readonly sortOptions = ['Melhor combinação', 'Menor preço'];
+
+  constructor() {
+    void this.carregarNutricionistasDoBanco();
+  }
+
+  private async carregarNutricionistasDoBanco(): Promise<void> {
+    const rows = await this.supabase.listarNutricionistas();
+    this.listFromDb.set(
+      rows.map((r, idx) => ({
+        name: r.nome_exibicao,
+        area: r.especialidades,
+        price: `R$ ${Math.round(Number(r.preco_consulta))}`,
+        image: r.foto_url || (idx === 1 ? secondProfessional : marinaPhoto),
+        best: r.melhor_combinacao,
+      })),
+    );
+  }
 
   protected onSearch(event: Event) {
     this.search.set((event.target as HTMLInputElement).value);

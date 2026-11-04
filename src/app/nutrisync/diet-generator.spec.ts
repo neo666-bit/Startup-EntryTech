@@ -119,12 +119,13 @@ describe('DietService', () => {
     expect(service.hasPlan()).toBe(false);
   });
 
-  it('gera, persiste e recarrega o plano', () => {
+  it('gera o plano e ignora armazenamento local antigo', () => {
+    localStorage.setItem('nutrisync.plan.v1', '{"version":1}');
     const service = new DietService();
+    expect(localStorage.getItem('nutrisync.plan.v1')).toBeNull();
     service.generate(baseProfile);
     expect(service.hasPlan()).toBe(true);
-    const reloaded = new DietService();
-    expect(reloaded.plan()?.summary.kcal).toBe(service.plan()?.summary.kcal);
+    expect(service.plan()?.days.length).toBe(7);
   });
 
   it('ignora dados salvos corrompidos', () => {

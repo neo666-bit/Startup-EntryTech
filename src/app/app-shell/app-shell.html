@@ -1,4 +1,4 @@
-<div class="nutrisync">
+<div class="nutrisync" (click)="menuOpen.set(false)">
   <div class="app">
     <header class="topbar">
       <button class="brand" routerLink="/home" aria-label="Ir para o painel">
@@ -6,9 +6,72 @@
         <strong>NutriSync</strong>
       </button>
       <div class="top-actions">
-        <button class="help"><i class="bi bi-question-circle"></i> <span>Precisa de ajuda?</span></button>
-        <button class="notification" aria-label="Notificações"><i class="bi bi-bell"></i></button>
-        <img [src]="marinaPhoto" alt="Seu perfil" />
+        <button class="help" type="button" (click)="openModal('suporte')">
+          <i class="bi bi-question-circle"></i> <span>Precisa de ajuda?</span>
+        </button>
+        <button class="notification" type="button" aria-label="Planos" (click)="openModal('planos')">
+          <i class="bi bi-bell"></i>
+        </button>
+
+        <div class="user-menu-wrap" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="user-trigger"
+            aria-label="Menu do usuário"
+            [attr.aria-expanded]="menuOpen()"
+            (click)="toggleUserMenu($event)"
+          >
+            <img [src]="avatarUrl()" alt="Seu perfil" />
+            <i class="bi bi-chevron-down user-caret"></i>
+          </button>
+
+          @if (menuOpen()) {
+            <div class="user-dropdown" role="menu" aria-label="Opções da conta">
+              <div class="user-dropdown-head">
+                <img [src]="avatarUrl()" alt="" />
+                <div>
+                  <strong>{{ account().nome }}</strong>
+                  <small>{{ account().email }}</small>
+                  <span class="user-plan-pill">{{ account().planoAssinatura }}</span>
+                </div>
+              </div>
+
+              <button type="button" class="user-dropdown-item" role="menuitem" (click)="openModal('configuracoes')">
+                <i class="bi bi-gear"></i>
+                <div>
+                  <b>Configurações</b>
+                  <small>Foto de perfil, dados e preferências</small>
+                </div>
+              </button>
+
+              <button type="button" class="user-dropdown-item" role="menuitem" (click)="openModal('planos')">
+                <i class="bi bi-award"></i>
+                <div>
+                  <b>Planos</b>
+                  <small>Assinatura atual e benefícios</small>
+                </div>
+              </button>
+
+              <button type="button" class="user-dropdown-item" role="menuitem" (click)="openModal('suporte')">
+                <i class="bi bi-headset"></i>
+                <div>
+                  <b>Suporte</b>
+                  <small>Dúvidas frequentes e atendimento</small>
+                </div>
+              </button>
+
+              <div class="user-dropdown-divider"></div>
+
+              <button type="button" class="user-dropdown-item danger" role="menuitem" (click)="sairDaConta()">
+                <i class="bi bi-box-arrow-right"></i>
+                <div>
+                  <b>Sair da conta</b>
+                  <small>Voltar para a tela de login</small>
+                </div>
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </header>
 
@@ -27,7 +90,7 @@
       </nav>
       @if (diet.hasPlan()) {
         <div class="plan-mini">
-          <div><strong>Plano Equilíbrio</strong><span><i class="bi bi-sun"></i></span></div>
+          <div><strong>{{ account().planoAssinatura }}</strong><span><i class="bi bi-sun"></i></span></div>
           <p>{{ diet.goalText() }}</p>
           <div class="profile-line"><span>Meta de peso</span><b>{{ diet.goalProgress() }}%</b></div>
           <div class="mini-progress"><i [style.width.%]="diet.goalProgress()"></i></div>
@@ -44,4 +107,275 @@
       <router-outlet />
     </main>
   </div>
+
+  <!-- MODAL: CONFIGURAÇÕES -->
+  @if (activeModal() === 'configuracoes') {
+    <div class="note-backdrop" role="presentation" (click)="closeAll()">
+      <section
+        class="user-modal card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Configurações da conta"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="user-modal-head">
+          <div>
+            <span class="eyebrow">Sua conta</span>
+            <h2><i class="bi bi-gear"></i> Configurações</h2>
+          </div>
+          <button type="button" class="note-close" aria-label="Fechar" (click)="closeAll()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </header>
+
+        @if (configSaved()) {
+          <div class="user-toast"><i class="bi bi-check-circle-fill"></i> {{ configSaved() }}</div>
+        }
+
+        <div class="avatar-upload-box">
+          <img [src]="avatarUrl()" alt="Foto de perfil atual" />
+          <div>
+            <strong>Foto de perfil (Arquivo PNG ou JPG)</strong>
+            <p>
+              Selecione um arquivo <b>.png</b> ou <b>.jpg</b> direto do seu computador ou celular (sem precisar de link/URL).
+              @if (account().fotoNomeArquivo) {
+                <br /><small>Arquivo atual: <b>{{ account().fotoNomeArquivo }}</b></small>
+              }
+            </p>
+            <div class="avatar-actions">
+              <button type="button" class="btn btn-outline swap-btn" (click)="avatarInput.click()">
+                <i class="bi bi-file-earmark-image"></i> Enviar arquivo PNG / JPG
+              </button>
+              @if (account().fotoBase64) {
+                <button type="button" class="btn btn-ghost swap-btn" (click)="removerFoto()">
+                  Remover foto
+                </button>
+              }
+              <input
+                #avatarInput
+                type="file"
+                accept=".png,.jpg,.jpeg,image/png,image/jpeg,image/webp"
+                hidden
+                (change)="onAvatarFile($event)"
+              />
+            </div>
+            @if (photoUploadError()) {
+              <small class="field-error">{{ photoUploadError() }}</small>
+            }
+          </div>
+        </div>
+
+        <form class="user-modal-form" (ngSubmit)="salvarConfiguracoes()">
+          <div class="two-cols">
+            <label class="field">
+              <span>Nome completo</span>
+              <input
+                type="text"
+                name="nome"
+                [ngModel]="account().nome"
+                (ngModelChange)="updateField('nome', $event)"
+              />
+            </label>
+            <label class="field">
+              <span>E-mail</span>
+              <input
+                type="email"
+                name="email"
+                [ngModel]="account().email"
+                (ngModelChange)="updateField('email', $event)"
+              />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label class="field">
+              <span>Telefone / WhatsApp</span>
+              <input
+                type="tel"
+                name="telefone"
+                [ngModel]="account().telefone"
+                (ngModelChange)="updateField('telefone', $event)"
+              />
+            </label>
+            <label class="field">
+              <span>Estado (UF)</span>
+              <select
+                name="estado"
+                [ngModel]="account().estado"
+                (ngModelChange)="updateField('estado', $event)"
+              >
+                @for (uf of estados; track uf) {
+                  <option [value]="uf">{{ uf }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <div class="prefs-box">
+            <label class="check-row">
+              <input
+                type="checkbox"
+                name="agua"
+                [ngModel]="account().lembretesAgua"
+                (ngModelChange)="updateField('lembretesAgua', $event)"
+              />
+              Receber lembretes diários de hidratação
+            </label>
+            <label class="check-row">
+              <input
+                type="checkbox"
+                name="resumo"
+                [ngModel]="account().resumoSemanalEmail"
+                (ngModelChange)="updateField('resumoSemanalEmail', $event)"
+              />
+              Receber resumo semanal de progresso por e-mail
+            </label>
+          </div>
+
+          <div class="user-modal-actions">
+            @if (diet.hasPlan()) {
+              <button type="button" class="btn btn-outline" (click)="limparDietaAtual()">
+                <i class="bi bi-trash3"></i> Apagar dieta atual
+              </button>
+            }
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg"></i> Salvar alterações
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+
+  <!-- MODAL: PLANOS -->
+  @if (activeModal() === 'planos') {
+    <div class="note-backdrop" role="presentation" (click)="closeAll()">
+      <section
+        class="user-modal user-modal-wide card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Planos e assinatura"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="user-modal-head">
+          <div>
+            <span class="eyebrow">Assinatura NutriSync</span>
+            <h2><i class="bi bi-award"></i> Escolha o plano ideal para sua rotina</h2>
+          </div>
+          <button type="button" class="note-close" aria-label="Fechar" (click)="closeAll()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </header>
+
+        <div class="plans-grid">
+          @for (p of planosDisponiveis; track p.id) {
+            <article
+              class="plan-tier-card"
+              [class.selected]="account().planoAssinatura === p.id"
+              [class.featured]="p.destaque"
+            >
+              @if (p.destaque) {
+                <span class="tier-badge">Mais escolhido</span>
+              }
+              <h3>{{ p.id }}</h3>
+              <div class="tier-price">
+                <strong>{{ p.preco }}</strong>
+                <small>{{ p.periodo }}</small>
+              </div>
+              <p>{{ p.descricao }}</p>
+              <ul>
+                @for (item of p.recursos; track item) {
+                  <li><i class="bi bi-check2-circle"></i> {{ item }}</li>
+                }
+              </ul>
+              <button
+                type="button"
+                class="btn"
+                [class.btn-accent]="account().planoAssinatura !== p.id"
+                [class.btn-primary]="account().planoAssinatura === p.id"
+                (click)="selecionarPlano(p.id)"
+              >
+                @if (account().planoAssinatura === p.id) {
+                  <i class="bi bi-check-lg"></i> Plano atual selecionado
+                } @else {
+                  Mudar para {{ p.id }}
+                }
+              </button>
+            </article>
+          }
+        </div>
+      </section>
+    </div>
+  }
+
+  <!-- MODAL: SUPORTE -->
+  @if (activeModal() === 'suporte') {
+    <div class="note-backdrop" role="presentation" (click)="closeAll()">
+      <section
+        class="user-modal card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Central de suporte"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="user-modal-head">
+          <div>
+            <span class="eyebrow">Ajuda e atendimento</span>
+            <h2><i class="bi bi-headset"></i> Central de Suporte</h2>
+          </div>
+          <button type="button" class="note-close" aria-label="Fechar" (click)="closeAll()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </header>
+
+        <div class="faq-list">
+          <h3>Dúvidas frequentes</h3>
+          @for (f of faqs; track f.pergunta) {
+            <div class="faq-item">
+              <b><i class="bi bi-question-circle"></i> {{ f.pergunta }}</b>
+              <p>{{ f.resposta }}</p>
+            </div>
+          }
+        </div>
+
+        <form class="user-modal-form" (ngSubmit)="enviarSuporte()">
+          <h3>Fale com a nossa equipe</h3>
+          @if (suporteProtocolo()) {
+            <div class="user-toast">
+              <i class="bi bi-check-circle-fill"></i>
+              Mensagem recebida! Protocolo de atendimento: <b>{{ suporteProtocolo() }}</b>. Responderemos em até 24h.
+            </div>
+          }
+          <label class="field">
+            <span>Assunto</span>
+            <select
+              name="assunto"
+              [ngModel]="suporteAssunto()"
+              (ngModelChange)="suporteAssunto.set($event)"
+            >
+              <option>Dúvida sobre meu plano alimentar</option>
+              <option>Agendamento com nutricionista</option>
+              <option>Problema técnico no aplicativo</option>
+              <option>Assinatura e cobrança</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Como podemos ajudar?</span>
+            <textarea
+              name="mensagem"
+              rows="3"
+              placeholder="Escreva sua dúvida ou sugestão..."
+              [ngModel]="suporteMensagem()"
+              (ngModelChange)="suporteMensagem.set($event)"
+            ></textarea>
+          </label>
+          <div class="user-modal-actions">
+            <button type="submit" class="btn btn-accent" [disabled]="!suporteMensagem().trim()">
+              <i class="bi bi-send"></i> Enviar mensagem ao suporte
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
 </div>
