@@ -55,9 +55,9 @@
                 <span>Melhor combinação</span>
               }
             </h3>
-            <small>CRN-3 58721 • Verificada</small>
+            <small>{{ person.crn }} • Verificado</small>
             <p>{{ person.area }}</p>
-            <b><i class="bi bi-star-fill"></i> 4,9 <small>(128 avaliações)</small></b>
+            <b><i class="bi bi-star-fill"></i> {{ person.rating }} <small>({{ person.reviewsCount }} {{ person.reviewsCount === 1 ? 'avaliação' : 'avaliações' }})</small></b>
             <div class="chips">
               <span class="chip">Online</span>
               <span class="chip">Plano alimentar</span>
@@ -66,7 +66,7 @@
           </div>
           <div class="professional-price">
             <strong>{{ person.price }}</strong>
-            <small>por consulta • 50 min</small>
+            <small>por consulta • {{ person.durationMin }} min</small>
             <span><i class="bi bi-calendar-event"></i> Hoje, 18:30</span>
             <button
               class="btn"

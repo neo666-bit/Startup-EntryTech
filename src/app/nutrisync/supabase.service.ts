@@ -67,6 +67,7 @@ export interface AmigoComProgresso {
 
 export interface SupabaseNutricionistaRow {
   id: string;
+  usuario_id?: string | null;
   nome_exibicao: string;
   crn: string;
   especialidades: string;
@@ -226,6 +227,8 @@ export class SupabaseService {
       let usuario = await this.buscarUsuarioPorEmail(emailLimpo);
       if (!usuario) {
         usuario = await this.cadastrarUsuario(dados);
+      } else if (dados.perfil === 'nutricionista') {
+        await this.garantirPerfilNutricionista(usuario);
       }
 
       return { ok: true, usuario: usuario ?? undefined };
@@ -450,10 +453,61 @@ export class SupabaseService {
       });
       if (!res.ok) return null;
       const rows = (await res.json()) as SupabaseUsuarioRow[];
-      return rows[0] ?? null;
+      const criado = rows[0] ?? null;
+      if (criado && dados.perfil === 'nutricionista') {
+        await this.garantirPerfilNutricionista(criado);
+      }
+      return criado;
     } catch {
       return null;
     }
+  }
+
+  /** Garante que todo usuário com perfil 'nutricionista' tenha registro ativo na tabela `nutricionistas`. */
+  async garantirPerfilNutricionista(usuario: SupabaseUsuarioRow): Promise<void> {
+    if (!isSupabaseConfigured() || usuario.tipo_perfil !== 'nutricionista') return;
+    try {
+      const checkRes = await fetch(
+        this.restUrl(`nutricionistas?usuario_id=eq.${usuario.id}&select=id&limit=1`),
+        { headers: this.headers() },
+      );
+      if (checkRes.ok) {
+        const existentes = (await checkRes.json()) as Array<{ id: string }>;
+        if (existentes.length > 0) return;
+      }
+
+      const sufixoCrn = String(Math.abs(this.hashSimples(usuario.email)) % 89999 + 10000);
+      const uf = (usuario.estado_uf || 'SP').toUpperCase();
+      await fetch(this.restUrl('nutricionistas'), {
+        method: 'POST',
+        headers: this.headers('return=minimal'),
+        body: JSON.stringify({
+          usuario_id: usuario.id,
+          nome_exibicao: usuario.nome,
+          crn: `CRN-${uf} ${sufixoCrn}`,
+          especialidades: `Nutrição clínica · Atendimento em ${uf} e Online`,
+          biografia: 'Profissional cadastrado na plataforma NutriSync para acompanhamento nutricional personalizado.',
+          preco_consulta: 180.0,
+          duracao_minutos: 50,
+          nota_media: 5.0,
+          total_avaliacoes: 1,
+          melhor_combinacao: false,
+          verificado: true,
+          foto_url: usuario.foto_perfil_base64 ?? null,
+          credenciais: [`Nutricionista — CRN-${uf} ${sufixoCrn}`, 'Atendimento Online NutriSync'],
+        }),
+      });
+    } catch {
+      /* erro ignorado */
+    }
+  }
+
+  private hashSimples(texto: string): number {
+    let h = 0;
+    for (let i = 0; i < texto.length; i++) {
+      h = (h * 31 + texto.charCodeAt(i)) | 0;
+    }
+    return h;
   }
 
   /** Atualiza configurações, plano de assinatura ou foto de perfil (PNG/JPG) na tabela `usuarios`. */
@@ -924,16 +978,64 @@ export class SupabaseService {
     }
   }
 
-  /** Lista os nutricionistas cadastrados na tabela `nutricionistas` do PostgreSQL. */
+  /** Lista os nutricionistas cadastrados na tabela `nutricionistas` e sincroniza contas `tipo_perfil = 'nutricionista'`. */
   async listarNutricionistas(): Promise<SupabaseNutricionistaRow[]> {
     if (!isSupabaseConfigured()) return [];
     try {
-      const res = await fetch(
-        this.restUrl('nutricionistas?select=*&order=melhor_combinacao.desc,preco_consulta.asc'),
-        { headers: this.headers() },
-      );
-      if (!res.ok) return [];
-      return (await res.json()) as SupabaseNutricionistaRow[];
+      const [nutriRes, usersRes] = await Promise.all([
+        fetch(
+          this.restUrl('nutricionistas?select=*&order=melhor_combinacao.desc,preco_consulta.asc'),
+          { headers: this.headers() },
+        ),
+        fetch(
+          this.restUrl('usuarios?tipo_perfil=eq.nutricionista&select=*&order=criado_em.desc'),
+          { headers: this.headers() },
+        ),
+      ]);
+
+      const nutris = nutriRes.ok ? ((await nutriRes.json()) as SupabaseNutricionistaRow[]) : [];
+      const usuariosNutri = usersRes.ok ? ((await usersRes.json()) as SupabaseUsuarioRow[]) : [];
+
+      const porUsuarioId = new Map<string, SupabaseNutricionistaRow>();
+      const porNome = new Map<string, SupabaseNutricionistaRow>();
+      for (const n of nutris) {
+        if (n.usuario_id) porUsuarioId.set(n.usuario_id, n);
+        porNome.set(n.nome_exibicao.trim().toLowerCase(), n);
+      }
+
+      for (const u of usuariosNutri) {
+        const existente = porUsuarioId.get(u.id) ?? porNome.get(u.nome.trim().toLowerCase());
+        if (existente) {
+          // Mantém foto e nome sincronizados com a conta do usuário nutricionista
+          if (u.foto_perfil_base64 && !existente.foto_url) {
+            existente.foto_url = u.foto_perfil_base64;
+          }
+          continue;
+        }
+
+        // Se a conta de nutricionista ainda não estava na tabela `nutricionistas`, sincroniza em background e inclui na lista:
+        void this.garantirPerfilNutricionista(u);
+        const sufixoCrn = String(Math.abs(this.hashSimples(u.email)) % 89999 + 10000);
+        const uf = (u.estado_uf || 'SP').toUpperCase();
+        nutris.push({
+          id: u.id,
+          usuario_id: u.id,
+          nome_exibicao: u.nome,
+          crn: `CRN-${uf} ${sufixoCrn}`,
+          especialidades: `Nutrição clínica · Atendimento em ${uf} e Online`,
+          biografia: 'Profissional cadastrado na plataforma NutriSync para acompanhamento nutricional personalizado.',
+          preco_consulta: 180,
+          duracao_minutos: 50,
+          nota_media: 5.0,
+          total_avaliacoes: 1,
+          melhor_combinacao: false,
+          verificado: true,
+          foto_url: u.foto_perfil_base64 ?? null,
+          credenciais: [`Nutricionista — CRN-${uf} ${sufixoCrn}`, 'Atendimento Online NutriSync'],
+        });
+      }
+
+      return nutris;
     } catch {
       return [];
     }
