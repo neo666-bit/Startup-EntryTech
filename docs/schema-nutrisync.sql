@@ -207,6 +207,22 @@ CREATE TABLE IF NOT EXISTS registros_peso (
 CREATE INDEX IF NOT EXISTS idx_registros_peso_usuario_data ON registros_peso (usuario_id, data_pesagem DESC);
 
 -- -----------------------------------------------------------------------------
+-- 6B. CONTROLE DIÁRIO DE HIDRATAÇÃO (Aba Hidratação — meta de água vs consumido)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS registros_agua (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    data_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    consumido_ml INTEGER NOT NULL DEFAULT 0 CHECK (consumido_ml >= 0),
+    meta_ml INTEGER NOT NULL DEFAULT 2000 CHECK (meta_ml > 0),
+    historico_goles JSONB NOT NULL DEFAULT '[]'::jsonb,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (usuario_id, data_registro)
+);
+
+ALTER TABLE registros_agua DISABLE ROW LEVEL SECURITY;
+
+-- -----------------------------------------------------------------------------
 -- 7. NUTRICIONISTAS E AGENDAMENTO DE CONSULTAS
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS nutricionistas (

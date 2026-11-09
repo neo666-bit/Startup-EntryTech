@@ -1,0 +1,323 @@
+<div class="page">
+  <div class="eyebrow"><i class="bi bi-droplet-fill"></i> Controle diário de hidratação</div>
+  <div class="title-actions">
+    <div>
+      <h1>Meta de água da sua dieta.</h1>
+      <p class="lead">
+        Acompanhe em tempo real quanta água seu corpo precisa conforme o cálculo da sua dieta (35 ml por kg) e
+        registre cada copo ou garrafa ao longo do dia.
+      </p>
+    </div>
+    <div>
+      <button class="btn btn-outline" routerLink="/minha-dieta">
+        <i class="bi bi-journal-check"></i> Ver minha dieta
+      </button>
+    </div>
+  </div>
+
+  @if (plan(); as p) {
+    <!-- CARDS DE RESUMO DO DIA -->
+    <div class="metrics-grid progress-metrics">
+      <section class="card water-metric-card">
+        <span>Meta estipulada na dieta</span>
+        <strong>{{ fmtDec(goalLiters()) }} L <small>({{ fmtInt(goalMl()) }} ml)</small></strong>
+        <p><i class="bi bi-calculator"></i> Baseado em 35 ml × {{ fmtDec(p.profile.weightKg) }} kg do seu perfil</p>
+      </section>
+
+      <section class="card water-metric-card consumed">
+        <span>Já tomou hoje ({{ todayLabel }})</span>
+        <strong>{{ fmtDec(consumedMl() / 1000, 2) }} L <small>({{ fmtInt(consumedMl()) }} ml)</small></strong>
+        <p>
+          <i class="bi bi-droplet-half"></i>
+          {{ rawPct() }}% da meta diária concluída ({{ todayLogs().length }} {{ todayLogs().length === 1 ? 'registro' : 'registros' }})
+        </p>
+      </section>
+
+      <section class="card water-metric-card" [class.goal-done]="goalReached()">
+        <span>Falta tomar hoje</span>
+        @if (goalReached()) {
+          <strong>Meta batida! <small>100%</small></strong>
+          <p>Parabéns! Você atingiu os {{ fmtDec(goalLiters()) }} L estipulados na dieta.</p>
+        } @else {
+          <strong>{{ fmtDec(remainingMl() / 1000, 2) }} L <small>({{ fmtInt(remainingMl()) }} ml)</small></strong>
+          <p><i class="bi bi-hourglass-split"></i> Cerca de {{ remainingCups() }} copos de 250 ml restantes</p>
+        }
+      </section>
+    </div>
+
+    <!-- GRÁFICO PRINCIPAL REPRESENTATIVO: QUANTO PRECISA TOMAR VS QUANTO JÁ TOMOU -->
+    <section class="card water-hero-chart-card">
+      <div class="card-title">
+        <div>
+          <h2>Gráfico Diário: Ingerido vs. Meta da Dieta</h2>
+          <small>Visualização direta do volume consumido hoje frente aos {{ fmtInt(goalMl()) }} ml estipulados no seu plano</small>
+        </div>
+        <span class="water-status-pill" [class.done]="goalReached()">
+          <i class="bi" [class]="goalReached() ? 'bi-patch-check-fill' : 'bi-droplet-half'"></i>
+          {{ goalReached() ? 'Meta diária concluída!' : fmtInt(consumedMl()) + ' / ' + fmtInt(goalMl()) + ' ml' }}
+        </span>
+      </div>
+
+      <div class="water-visual-grid">
+        <!-- 1. GRÁFICO DE ANEL (DONUT SVG) -->
+        <div class="water-donut-box">
+          <div class="water-donut-wrap">
+            <svg viewBox="0 0 180 180" class="water-donut-svg" aria-label="Gráfico circular de hidratação">
+              <defs>
+                <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#228be6" />
+                  <stop offset="100%" stop-color="#285a4c" />
+                </linearGradient>
+              </defs>
+              <!-- Trilha do total necessário -->
+              <circle class="donut-track" cx="90" cy="90" r="76" />
+              <!-- Preenchimento do que já tomou -->
+              <circle
+                class="donut-progress"
+                cx="90"
+                cy="90"
+                r="76"
+                [attr.stroke-dasharray]="donutCircumference"
+                [attr.stroke-dashoffset]="donutDashOffset()"
+              />
+            </svg>
+            <div class="water-donut-center">
+              <i class="bi bi-droplet-fill"></i>
+              <strong>{{ rawPct() }}%</strong>
+              <span>{{ fmtDec(consumedMl() / 1000, 2) }} L de {{ fmtDec(goalLiters()) }} L</span>
+            </div>
+          </div>
+          <div class="water-donut-legend">
+            <div>
+              <span class="dot taken"></span>
+              <span>Já tomou: <b>{{ fmtInt(consumedMl()) }} ml</b></span>
+            </div>
+            <div>
+              <span class="dot remaining"></span>
+              <span>Falta tomar: <b>{{ fmtInt(remainingMl()) }} ml</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. CILINDRO / GARRAFA GRADUADA COM NÍVEL DE ÁGUA EM TEMPO REAL -->
+        <div class="water-bottle-box">
+          <div class="bottle-stage">
+            <div class="bottle-vessel" aria-label="Medidor graduado de nível de água">
+              <div class="bottle-water-fill" [style.height.%]="progressPct()">
+                <div class="bottle-wave"></div>
+                @if (progressPct() >= 14) {
+                  <span class="bottle-fill-label">{{ fmtInt(consumedMl()) }} ml</span>
+                }
+              </div>
+              @for (mark of bottleMarks(); track mark.pct) {
+                <div class="bottle-mark-line" [style.bottom.%]="mark.pct"></div>
+              }
+            </div>
+            <div class="bottle-scale">
+              @for (mark of bottleMarks(); track mark.pct) {
+                <div class="bottle-scale-item" [style.bottom.%]="mark.pct">
+                  <b>{{ mark.pct }}%</b>
+                  <span>{{ mark.label }}</span>
+                </div>
+              }
+              <div class="bottle-scale-item" style="bottom: 0%">
+                <b>0%</b>
+                <span>0,0 L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. BARRA COMPARATIVA DETALHADA + GRADE DE COPOS DE 250 ML -->
+        <div class="water-breakdown-box">
+          <h3>Proporção da Meta Diária ({{ fmtDec(goalLiters()) }} L)</h3>
+          <div class="split-comparison-bar" role="img" aria-label="Comparação entre água ingerida e restante">
+            <div class="split-taken" [style.width.%]="progressPct()">
+              @if (progressPct() >= 18) {
+                <span>Tomou {{ fmtInt(consumedMl()) }} ml</span>
+              }
+            </div>
+            <div class="split-left" [style.width.%]="100 - progressPct()">
+              @if (100 - progressPct() >= 22) {
+                <span>Faltam {{ fmtInt(remainingMl()) }} ml</span>
+              }
+            </div>
+          </div>
+
+          <div class="comparison-cards">
+            <div class="comp-item taken">
+              <small>JÁ INGERIDO HOJE</small>
+              <strong>{{ fmtInt(consumedMl()) }} ml</strong>
+              <span>Equivale a {{ fmtDec(consumedMl() / 250, 1) }} copos de 250 ml</span>
+            </div>
+            <div class="comp-item needed">
+              <small>FALTA PARA A META</small>
+              <strong>{{ fmtInt(remainingMl()) }} ml</strong>
+              <span>Meta total estipulada: {{ fmtInt(goalMl()) }} ml</span>
+            </div>
+          </div>
+
+          <div class="cups-grid-head">
+            <span>Equivalência em copos de 250 ml</span>
+            <small>Clique em um copo vazio para somar +250 ml</small>
+          </div>
+          <div class="cups-grid">
+            @for (cup of cupsGrid(); track cup.index) {
+              <button
+                type="button"
+                class="cup-tile"
+                [class.filled]="cup.filled"
+                [class.partial]="cup.partial"
+                (click)="onCupClick(cup.filled)"
+                [title]="cup.filled ? 'Copo #' + cup.index + ' concluído (250 ml)' : 'Clique para adicionar +250 ml'"
+              >
+                <div class="cup-icon-wrap">
+                  <div class="cup-liquid" [style.height.%]="cup.fillPct"></div>
+                  <i class="bi bi-cup-straw"></i>
+                </div>
+                <small>{{ cup.index }}º</small>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTADOR DE ÁGUA: BOTÕES RÁPIDOS + DOSE PERSONALIZADA -->
+    <div class="plan-columns water-bottom-columns">
+      <div>
+        <section class="card">
+          <div class="card-title">
+            <div>
+              <h2>Registrar água agora</h2>
+              <small>Toque em um recipiente abaixo ou informe os ml exatos</small>
+            </div>
+            @if (todayLogs().length > 0) {
+              <button type="button" class="btn btn-outline btn-sm-clear" (click)="clearToday()">
+                <i class="bi bi-arrow-counterclockwise"></i> Zerar hoje
+              </button>
+            }
+          </div>
+
+          <div class="quick-water-grid">
+            @for (opt of quickOptions; track opt.ml) {
+              <button type="button" class="quick-water-btn" (click)="addQuick(opt)">
+                <span class="qw-icon"><i class="bi" [class]="opt.icon"></i></span>
+                <strong>{{ opt.label }}</strong>
+                <small>{{ opt.subtitle }}</small>
+              </button>
+            }
+          </div>
+
+          <div class="custom-water-form">
+            <label class="field">
+              <span>Outra quantidade (em ml)</span>
+              <input
+                type="number"
+                min="10"
+                max="5000"
+                step="50"
+                placeholder="Ex.: 300"
+                [ngModel]="customMl()"
+                (ngModelChange)="customMl.set($event)"
+                (keydown.enter)="addCustom()"
+              />
+            </label>
+            <button type="button" class="btn btn-primary" (click)="addCustom()">
+              <i class="bi bi-plus-circle"></i> Somar ao dia
+            </button>
+          </div>
+
+          @if (error()) {
+            <small class="field-error">{{ error() }}</small>
+          }
+          @if (feedback()) {
+            <div class="water-feedback"><i class="bi bi-check2-circle"></i> {{ feedback() }}</div>
+          }
+        </section>
+
+        <!-- GRÁFICO SEMANAL DE HIDRATAÇÃO -->
+        <section class="card chart-card" style="margin-top: 20px;">
+          <div class="card-title">
+            <div>
+              <h2>Constância na Semana</h2>
+              <small>Comparativo diário com a meta de {{ fmtDec(goalLiters()) }} L da sua dieta</small>
+            </div>
+            <span class="success-pill">Meta: {{ fmtInt(goalMl()) }} ml/dia</span>
+          </div>
+
+          <div class="water-week-chart">
+            @for (b of weekBars(); track b.weekday) {
+              <div class="water-week-col" [class.today]="b.isToday">
+                <span class="ww-val">{{ b.liters }} L</span>
+                <div class="ww-track">
+                  <div
+                    class="ww-bar"
+                    [class.reached]="b.reached"
+                    [style.height.%]="b.pct"
+                    [title]="b.label + ': ' + b.ml + ' ml (' + b.pct + '%)'"
+                  ></div>
+                </div>
+                <strong class="ww-day">{{ b.label }}@if (b.isToday) { • hoje }</strong>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- HISTÓRICO DE REGISTROS DE HOJE -->
+      <div class="side-stack">
+        <section class="card">
+          <div class="card-title">
+            <h3>Registros de hoje</h3>
+            <small>{{ todayLogs().length }} {{ todayLogs().length === 1 ? 'item' : 'itens' }}</small>
+          </div>
+
+          @if (todayLogs().length > 0) {
+            <ul class="water-log-list">
+              @for (item of todayLogs(); track item.id) {
+                <li class="water-log-item">
+                  <div class="wl-left">
+                    <span class="wl-drop"><i class="bi bi-droplet-fill"></i></span>
+                    <div>
+                      <strong>+{{ fmtInt(item.ml) }} ml</strong>
+                      <small>{{ item.label }} às {{ item.time }}</small>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="wl-remove"
+                    (click)="removeLog(item.id)"
+                    title="Remover este registro"
+                    aria-label="Remover registro"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-water-logs">
+              Você ainda não registrou água hoje. Use os botões ao lado para começar a preencher sua meta de
+              <b>{{ fmtDec(goalLiters()) }} L</b>!
+            </p>
+          }
+        </section>
+
+        <section class="card accent-side">
+          <h3>Por que {{ fmtDec(goalLiters()) }} L por dia?</h3>
+          <p>
+            Sua meta hídrica é calculada na geração da dieta multiplicando <b>35 ml por cada quilo</b> do seu peso
+            corporal ({{ fmtDec(p.profile.weightKg) }} kg), garantindo saciedade, bom funcionamento metabólico e
+            melhor aproveitamento dos nutrientes.
+          </p>
+        </section>
+      </div>
+    </div>
+  } @else {
+    <app-empty-plan
+      title="Sua meta de água nasce com a sua dieta"
+      description="Crie seu plano alimentar para calcularmos automaticamente quantos litros de água você precisa por dia e liberar seu contador diário."
+    />
+  }
+</div>

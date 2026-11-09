@@ -1,0 +1,610 @@
+.water-metric-card strong small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.water-metric-card.consumed strong {
+  color: #1c7ed6;
+}
+
+.water-metric-card.goal-done {
+  border-color: #2b8a3e;
+  background: linear-gradient(135deg, #ffffff 0%, #ebfbee 100%);
+}
+
+.water-metric-card.goal-done strong {
+  color: #2b8a3e;
+}
+
+.water-hero-chart-card {
+  margin-bottom: 24px;
+}
+
+.water-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #e7f5ff;
+  color: #1971c2;
+  border: 1px solid #a5d8ff;
+}
+
+.water-status-pill.done {
+  background: var(--green-pale);
+  color: var(--green-dark);
+  border-color: #96c5b5;
+}
+
+.water-visual-grid {
+  display: grid;
+  grid-template-columns: 240px 230px 1fr;
+  gap: 28px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+/* 1. DONUT SVG */
+.water-donut-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.water-donut-wrap {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  display: grid;
+  place-items: center;
+}
+
+.water-donut-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.donut-track {
+  fill: none;
+  stroke: #e6f2f8;
+  stroke-width: 16;
+}
+
+.donut-progress {
+  fill: none;
+  stroke: url(#waterGrad);
+  stroke-width: 16;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.water-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 18px;
+}
+
+.water-donut-center i {
+  font-size: 22px;
+  color: #1c7ed6;
+  margin-bottom: 2px;
+}
+
+.water-donut-center strong {
+  font-size: 30px;
+  line-height: 1.05;
+  color: var(--text);
+}
+
+.water-donut-center span {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.water-donut-legend {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.water-donut-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.water-donut-legend .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.water-donut-legend .dot.taken {
+  background: linear-gradient(135deg, #228be6, #285a4c);
+}
+
+.water-donut-legend .dot.remaining {
+  background: #dcebf3;
+  border: 1px solid #b5d3e6;
+}
+
+/* 2. GARRAFA / CILINDRO GRADUADO */
+.water-bottle-box {
+  display: flex;
+  justify-content: center;
+}
+
+.bottle-stage {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  height: 220px;
+}
+
+.bottle-vessel {
+  position: relative;
+  width: 96px;
+  height: 100%;
+  border-radius: 22px 22px 26px 26px;
+  background: #edf6fa;
+  border: 3px solid #285a4c;
+  overflow: hidden;
+  box-shadow: inset 0 6px 16px rgba(28, 126, 214, 0.08);
+}
+
+.bottle-water-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #339af0 0%, #1c7ed6 55%, #285a4c 100%);
+  transition: height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.bottle-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.bottle-fill-label {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+}
+
+.bottle-mark-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed rgba(29, 45, 39, 0.22);
+  pointer-events: none;
+}
+
+.bottle-scale {
+  position: relative;
+  width: 105px;
+  height: 100%;
+}
+
+.bottle-scale-item {
+  position: absolute;
+  left: 0;
+  transform: translateY(50%);
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bottle-scale-item b {
+  color: var(--text);
+}
+
+.bottle-scale-item span {
+  color: var(--muted);
+}
+
+/* 3. BARRA COMPARATIVA + GRADE DE COPOS */
+.water-breakdown-box h3 {
+  margin-bottom: 10px;
+}
+
+.split-comparison-bar {
+  height: 36px;
+  border-radius: 12px;
+  background: #e6f2f8;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid #c5e0f0;
+  margin-bottom: 14px;
+}
+
+.split-taken {
+  background: linear-gradient(90deg, #228be6, #285a4c);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: width 0.5s ease;
+}
+
+.split-left {
+  background: #edf6fa;
+  color: #496575;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: width 0.5s ease;
+}
+
+.comparison-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.comp-item {
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comp-item.taken {
+  background: #f0f8ff;
+  border-color: #b8dff8;
+}
+
+.comp-item.taken strong {
+  color: #1971c2;
+  font-size: 20px;
+}
+
+.comp-item.needed {
+  background: #f8faf8;
+}
+
+.comp-item.needed strong {
+  color: var(--green-dark);
+  font-size: 20px;
+}
+
+.comp-item small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.comp-item span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cups-grid-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cups-grid-head small {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cups-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cup-tile {
+  width: 52px;
+  padding: 7px 4px 5px;
+  border-radius: 10px;
+  border: 1px solid #cfe3ef;
+  background: #f7fbfd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.cup-tile:hover {
+  transform: translateY(-2px);
+  border-color: #228be6;
+}
+
+.cup-tile.filled {
+  background: #e7f5ff;
+  border-color: #339af0;
+}
+
+.cup-icon-wrap {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #eaf3f8;
+}
+
+.cup-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, #4dabf7, #1c7ed6);
+  transition: height 0.35s ease;
+}
+
+.cup-icon-wrap i {
+  position: relative;
+  z-index: 1;
+  font-size: 15px;
+  color: #1d2d27;
+}
+
+.cup-tile.filled .cup-icon-wrap i {
+  color: #fff;
+}
+
+.cup-tile small {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* BOTÕES RÁPIDOS DE CONTADOR */
+.quick-water-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+
+.quick-water-btn {
+  border: 1px solid #cbe2f0;
+  background: #f5faff;
+  border-radius: 14px;
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.quick-water-btn:hover {
+  transform: translateY(-2px);
+  background: #e7f5ff;
+  border-color: #339af0;
+  box-shadow: 0 6px 14px rgba(28, 126, 214, 0.12);
+}
+
+.qw-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #d0ebff;
+  color: #1971c2;
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  margin-bottom: 2px;
+}
+
+.quick-water-btn strong {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.quick-water-btn small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.custom-water-form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.custom-water-form .field {
+  flex: 1;
+  margin: 0;
+}
+
+.btn-sm-clear {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.water-feedback {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* GRÁFICO SEMANAL */
+.water-week-chart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 8px;
+}
+
+.water-week-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ww-val {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.ww-track {
+  width: 100%;
+  max-width: 48px;
+  height: 140px;
+  background: #edf5f9;
+  border-radius: 12px;
+  border: 1px solid #d5e6f0;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 3px;
+}
+
+.ww-bar {
+  width: 100%;
+  min-height: 6px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #4dabf7, #1c7ed6);
+  transition: height 0.4s ease;
+}
+
+.ww-bar.reached {
+  background: linear-gradient(180deg, #3b7d6b, #285a4c);
+}
+
+.ww-day {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.water-week-col.today .ww-day {
+  color: var(--green-dark);
+}
+
+/* LISTA DE REGISTROS DO DIA */
+.water-log-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.water-log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #f8fbfd;
+  border: 1px solid #ddebf3;
+}
+
+.wl-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wl-drop {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #d0ebff;
+  color: #1971c2;
+  display: grid;
+  place-items: center;
+}
+
+.wl-left strong {
+  display: block;
+  font-size: 14px;
+}
+
+.wl-left small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wl-remove {
+  border: 0;
+  background: transparent;
+  color: #86938d;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 7px;
+}
+
+.wl-remove:hover {
+  background: #ffe3e3;
+  color: #c92a2a;
+}
+
+.empty-water-logs {
+  font-size: 14px;
+  margin: 10px 0 0;
+}
+
+@media (max-width: 980px) {
+  .water-visual-grid {
+    grid-template-columns: 1fr;
+  }
+  .quick-water-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

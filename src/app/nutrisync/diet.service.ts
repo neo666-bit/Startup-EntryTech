@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { buildMeal, generatePlan, lunchNeedsPortable, rankOptions, totalsOf } from './diet-generator';
-import { DayPlan, DietPlan, PlannedMeal, Slot, UserProfile } from './models';
+import { DayPlan, DietPlan, PlannedMeal, Slot, UserProfile, WaterLogItem } from './models';
 import { fmtDec } from './format';
 import { SupabaseService } from './supabase.service';
 
@@ -20,6 +20,35 @@ export class DietService {
   });
 
   readonly startWeight = computed(() => this.state()?.weights[0]?.kg ?? null);
+
+  /** Meta diária de água (em litros) estipulada na geração da dieta (35 ml por kg corporal). */
+  readonly waterGoalLiters = computed(() => {
+    const p = this.state();
+    return p ? Math.round(p.profile.weightKg * 0.035 * 10) / 10 : 0;
+  });
+
+  /** Meta diária de água em mililitros (ml). */
+  readonly waterGoalMl = computed(() => Math.round(this.waterGoalLiters() * 1000));
+
+  /** Registros de água tomados na data de hoje. */
+  readonly waterTodayLogs = computed(() => {
+    const p = this.state();
+    if (!p) return [];
+    const key = this.todayIso();
+    return p.waterHistory?.[key] ?? [];
+  });
+
+  /** Total de água (em ml) ingerido hoje. */
+  readonly waterTodayMl = computed(() =>
+    this.waterTodayLogs().reduce((sum, item) => sum + item.ml, 0),
+  );
+
+  /** Percentual da meta diária de água concluído hoje (0 a 100%). */
+  readonly waterTodayPct = computed(() => {
+    const goal = this.waterGoalMl();
+    if (!goal) return 0;
+    return Math.min(100, Math.round((this.waterTodayMl() / goal) * 100));
+  });
 
   /** Texto curto do objetivo, usado na barra lateral. */
   readonly goalText = computed(() => {
@@ -66,7 +95,11 @@ export class DietService {
 
   generate(profile: UserProfile): DietPlan {
     const plan = generatePlan(profile, new Date(), this.state()?.weights ?? []);
-    const novoPlano: DietPlan = { ...plan, overrides: {} };
+    const novoPlano: DietPlan = {
+      ...plan,
+      overrides: {},
+      waterHistory: this.state()?.waterHistory ?? {},
+    };
     this.state.set(novoPlano);
     void this.supabase.sincronizarPlanoAlimentar(novoPlano);
     return this.state()!;
@@ -139,6 +172,90 @@ export class DietService {
     this.state.set({ ...plan, weights: [...plan.weights, { date: new Date().toISOString(), kg }] });
     void this.supabase.registrarPesoNoBanco(kg);
     return true;
+  }
+
+  /** Retorna a data atual no formato AAAA-MM-DD. */
+  todayIso(now: Date = new Date()): string {
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+
+  /** Retorna o total de água ingerido (em ml) em uma data específica (AAAA-MM-DD). */
+  waterConsumedMlOn(dateIso: string): number {
+    const logs = this.state()?.waterHistory?.[dateIso] ?? [];
+    return logs.reduce((sum, item) => sum + item.ml, 0);
+  }
+
+  /** Registra uma ingestão de água (em ml) no dia e sincroniza com o banco PostgreSQL. */
+  addWater(ml: number, label = 'Copo de água', dateIso: string = this.todayIso()): boolean {
+    const plan = this.state();
+    const rounded = Math.round(ml);
+    if (!plan || !Number.isFinite(rounded) || rounded < 10 || rounded > 5000) return false;
+
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const item: WaterLogItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      time,
+      ml: rounded,
+      label,
+    };
+
+    const currentDayLogs = plan.waterHistory?.[dateIso] ?? [];
+    const waterHistory: Record<string, WaterLogItem[]> = {
+      ...(plan.waterHistory ?? {}),
+      [dateIso]: [item, ...currentDayLogs],
+    };
+
+    const atualizado: DietPlan = { ...plan, waterHistory };
+    this.state.set(atualizado);
+    const totalDia = waterHistory[dateIso].reduce((s, x) => s + x.ml, 0);
+    void this.supabase.salvarHidratacaoNoBanco(
+      plan.summary.notes,
+      waterHistory,
+      dateIso,
+      totalDia,
+      this.waterGoalMl(),
+    );
+    return true;
+  }
+
+  /** Remove um registro específico de água do dia e atualiza o banco PostgreSQL. */
+  removeWaterLog(id: string, dateIso: string = this.todayIso()): void {
+    const plan = this.state();
+    if (!plan) return;
+    const currentDayLogs = plan.waterHistory?.[dateIso] ?? [];
+    const filtrados = currentDayLogs.filter((item) => item.id !== id);
+    const waterHistory: Record<string, WaterLogItem[]> = {
+      ...(plan.waterHistory ?? {}),
+      [dateIso]: filtrados,
+    };
+    this.state.set({ ...plan, waterHistory });
+    const totalDia = filtrados.reduce((s, x) => s + x.ml, 0);
+    void this.supabase.salvarHidratacaoNoBanco(
+      plan.summary.notes,
+      waterHistory,
+      dateIso,
+      totalDia,
+      this.waterGoalMl(),
+    );
+  }
+
+  /** Zera os registros de água da data informada e atualiza o banco PostgreSQL. */
+  clearWaterDay(dateIso: string = this.todayIso()): void {
+    const plan = this.state();
+    if (!plan) return;
+    const waterHistory: Record<string, WaterLogItem[]> = {
+      ...(plan.waterHistory ?? {}),
+      [dateIso]: [],
+    };
+    this.state.set({ ...plan, waterHistory });
+    void this.supabase.salvarHidratacaoNoBanco(
+      plan.summary.notes,
+      waterHistory,
+      dateIso,
+      0,
+      this.waterGoalMl(),
+    );
   }
 
   reset(): void {

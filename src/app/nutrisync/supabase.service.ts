@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { FOOD_CATALOG } from './food-catalog';
-import { DayPlan, DietPlan, Goal, Pattern, PlannedMeal, Sex, Slot, UserProfile, WeightEntry } from './models';
+import { DayPlan, DietPlan, Goal, Pattern, PlannedMeal, Sex, Slot, UserProfile, WaterLogItem, WeightEntry } from './models';
 import { isSupabaseConfigured, SUPABASE_CONFIG } from './supabase.config';
 
 export type PlanoAssinatura =
@@ -1119,6 +1119,25 @@ export class SupabaseService {
         }
       }
 
+      const rawAvisos = Array.isArray(sRow['avisos']) ? (sRow['avisos'] as string[]) : [];
+      const notes: string[] = [];
+      let waterHistory: Record<string, WaterLogItem[]> = {};
+
+      for (const item of rawAvisos) {
+        if (typeof item === 'string' && item.startsWith('__HIDRATACAO__:')) {
+          try {
+            const parsed = JSON.parse(item.slice('__HIDRATACAO__:'.length)) as Record<string, WaterLogItem[]>;
+            if (parsed && typeof parsed === 'object') {
+              waterHistory = parsed;
+            }
+          } catch {
+            /* json inválido ignorado */
+          }
+        } else if (typeof item === 'string') {
+          notes.push(item);
+        }
+      }
+
       return {
         version: 1,
         createdAt: String(sRow['criado_em'] ?? new Date().toISOString()),
@@ -1136,14 +1155,69 @@ export class SupabaseService {
             carbs: Number(sRow['meta_carboidrato_g'] ?? 0),
             fat: Number(sRow['meta_gordura_g'] ?? 0),
           },
-          notes: Array.isArray(sRow['avisos']) ? (sRow['avisos'] as string[]) : [],
+          notes,
         },
         days,
         weights,
         overrides,
+        waterHistory,
       };
     } catch {
       return null;
+    }
+  }
+
+  private empacotarAvisosComHidratacao(
+    notes: string[],
+    waterHistory?: Record<string, WaterLogItem[]>,
+  ): string[] {
+    const limpos = (notes ?? []).filter((n) => !n.startsWith('__HIDRATACAO__:'));
+    if (waterHistory && Object.keys(waterHistory).length > 0) {
+      limpos.push(`__HIDRATACAO__:${JSON.stringify(waterHistory)}`);
+    }
+    return limpos;
+  }
+
+  /** Salva o histórico diário de ingestão de água diretamente no banco PostgreSQL (Supabase). */
+  async salvarHidratacaoNoBanco(
+    notes: string[],
+    waterHistory: Record<string, WaterLogItem[]>,
+    dataIso?: string,
+    totalMlDia?: number,
+    metaMlDia?: number,
+  ): Promise<void> {
+    const email = this.emailAutenticado() ?? this.lerEmailSessao();
+    if (!isSupabaseConfigured() || !email) return;
+    try {
+      const usuario = await this.buscarUsuarioPorEmail(email);
+      if (!usuario) return;
+
+      const avisosAtualizados = this.empacotarAvisosComHidratacao(notes, waterHistory);
+      await fetch(
+        this.restUrl(`planos_alimentares?usuario_id=eq.${usuario.id}&ativo=eq.true`),
+        {
+          method: 'PATCH',
+          headers: this.headers('return=minimal'),
+          body: JSON.stringify({ avisos: avisosAtualizados }),
+        },
+      );
+
+      // Se a tabela opcional `registros_agua` também existir no banco, sincroniza nela:
+      if (dataIso && totalMlDia !== undefined && metaMlDia !== undefined) {
+        await fetch(this.restUrl('registros_agua?on_conflict=usuario_id,data_registro'), {
+          method: 'POST',
+          headers: this.headers('resolution=merge-duplicates,return=minimal'),
+          body: JSON.stringify({
+            usuario_id: usuario.id,
+            data_registro: dataIso,
+            consumido_ml: totalMlDia,
+            meta_ml: metaMlDia,
+            historico_goles: waterHistory[dataIso] ?? [],
+          }),
+        }).catch(() => undefined);
+      }
+    } catch {
+      /* erro de rede ignorado */
     }
   }
 
@@ -1211,7 +1285,7 @@ export class SupabaseService {
           meta_proteina_g: s.macroTargets.protein,
           meta_carboidrato_g: s.macroTargets.carbs,
           meta_gordura_g: s.macroTargets.fat,
-          avisos: s.notes,
+          avisos: this.empacotarAvisosComHidratacao(s.notes, plan.waterHistory),
         }),
       });
       if (!planoRes.ok) return;

@@ -86,6 +86,13 @@ export interface WeightEntry {
   kg: number;
 }
 
+export interface WaterLogItem {
+  id: string;
+  time: string;
+  ml: number;
+  label: string;
+}
+
 export interface DietPlan {
   version: 1;
   createdAt: string;
@@ -95,4 +102,6 @@ export interface DietPlan {
   weights: WeightEntry[];
   /** Substituições pontuais por data (AAAA-MM-DD): valem só para aquele dia. */
   overrides?: Record<string, PlannedMeal[]>;
+  /** Histórico diário de ingestão de água por data (AAAA-MM-DD). */
+  waterHistory?: Record<string, WaterLogItem[]>;
 }

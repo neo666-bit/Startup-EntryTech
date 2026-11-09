@@ -159,6 +159,7 @@ export class AppShell {
   protected readonly nav = [
     { path: '/home', label: 'Painel', icon: 'bi-grid' },
     { path: '/minha-dieta', label: 'Minha dieta', icon: 'bi-journal-check' },
+    { path: '/hidratacao', label: 'Hidratação', icon: 'bi-droplet-half' },
     { path: '/progresso', label: 'Progresso', icon: 'bi-graph-up-arrow' },
     { path: '/nutricionistas', label: 'Nutricionistas', icon: 'bi-people' },
     { path: '/analise-foto', label: 'Análise por foto', icon: 'bi-camera' },

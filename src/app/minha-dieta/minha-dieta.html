@@ -58,7 +58,10 @@
       </section>
       <section class="card focus">
         <h3>Foco desta semana</h3>
-        <p><i class="bi bi-check2-circle"></i> {{ fmtDec(waterLiters()) }} L de água ao longo do dia</p>
+        <p>
+          <i class="bi bi-check2-circle"></i> {{ fmtDec(waterLiters()) }} L de água ao longo do dia
+          · <a routerLink="/hidratacao" style="color: var(--green); font-weight: 700; text-decoration: underline;">Abrir contador</a>
+        </p>
         <p><i class="bi bi-check2-circle"></i> Vegetais no almoço e jantar</p>
         <p><i class="bi bi-check2-circle"></i> Proteína em todas as refeições</p>
       </section>
