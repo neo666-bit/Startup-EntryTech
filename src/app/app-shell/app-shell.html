@@ -32,7 +32,7 @@
                 <div>
                   <strong>{{ account().nome }}</strong>
                   <small>{{ account().email }}</small>
-                  <span class="user-plan-pill">{{ account().planoAssinatura }}</span>
+                  <span class="user-plan-pill">{{ planoAtivo() }}</span>
                 </div>
               </div>
 
@@ -41,6 +41,14 @@
                 <div>
                   <b>Configurações</b>
                   <small>Foto de perfil, dados e preferências</small>
+                </div>
+              </button>
+
+              <button type="button" class="user-dropdown-item" role="menuitem" (click)="irParaAmigos()">
+                <i class="bi bi-fire"></i>
+                <div>
+                  <b>Amigos</b>
+                  <small>Amizades, ofensiva (streak) e progresso</small>
                 </div>
               </button>
 
@@ -90,7 +98,7 @@
       </nav>
       @if (diet.hasPlan()) {
         <div class="plan-mini">
-          <div><strong>{{ account().planoAssinatura }}</strong><span><i class="bi bi-sun"></i></span></div>
+          <div><strong>{{ planoAtivo() }}</strong><span><i class="bi bi-sun"></i></span></div>
           <p>{{ diet.goalText() }}</p>
           <div class="profile-line"><span>Meta de peso</span><b>{{ diet.goalProgress() }}%</b></div>
           <div class="mini-progress"><i [style.width.%]="diet.goalProgress()"></i></div>
@@ -232,6 +240,84 @@
             </label>
           </div>
 
+          <!-- VAGAS DO PLANO DUPLA / FAMÍLIA DENTRO DE CONFIGURAÇÕES -->
+          <div class="prefs-box" style="display: grid; gap: 10px">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px">
+              <div>
+                <strong style="font-size: 14px; color: var(--green-dark)">
+                  <i class="bi bi-people-fill"></i> Amigos vinculados ao seu {{ planoAtivo() }}
+                </strong>
+                <div class="muted" style="font-size: 12px">
+                  @if (limiteAmigosPlano() > 0) {
+                    Vagas ocupadas: <b>{{ amigosPlano().length }}/{{ limiteAmigosPlano() }}</b>
+                    ({{ planoAtivo() === 'Plano Dupla' ? 'você + 1 amigo' : 'você + até 3 amigos' }})
+                  } @else {
+                    Plano individual (mude para Plano Dupla ou Plano Família para compartilhar com amigos)
+                  }
+                </div>
+              </div>
+              @if (limiteAmigosPlano() === 0) {
+                <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                  <button type="button" class="btn btn-outline swap-btn" (click)="selecionarPlano('Plano Dupla')">
+                    Ativar Plano Dupla (1 amigo)
+                  </button>
+                  <button type="button" class="btn btn-accent swap-btn" (click)="selecionarPlano('Plano Família')">
+                    Ativar Plano Família (3 amigos)
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (limiteAmigosPlano() > 0) {
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+                <input
+                  type="email"
+                  name="emailAmigoPlano"
+                  placeholder="E-mail do amigo para adicionar ao plano"
+                  style="flex: 1; min-width: 210px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit"
+                  [ngModel]="emailAmigoPlano()"
+                  (ngModelChange)="emailAmigoPlano.set($event)"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline swap-btn"
+                  [disabled]="carregandoAmigoPlano()"
+                  (click)="adicionarAmigoAoPlanoConfig()"
+                >
+                  <i class="bi bi-person-plus-fill"></i>
+                  {{ carregandoAmigoPlano() ? 'Adicionando...' : 'Adicionar ao plano' }}
+                </button>
+              </div>
+            }
+
+            @if (erroAmigoPlano()) {
+              <small class="field-error">{{ erroAmigoPlano() }}</small>
+            }
+
+            @if (amigosPlano().length > 0) {
+              <div style="display: grid; gap: 6px; margin-top: 4px">
+                @for (membro of amigosPlano(); track membro.id) {
+                  <div
+                    style="display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13px"
+                  >
+                    <div>
+                      <b>{{ membro.nome_amigo }}</b>
+                      <span class="muted"> · {{ membro.email_amigo }}</span>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-ghost swap-btn"
+                      style="padding: 4px 8px; font-size: 12px"
+                      (click)="removerAmigoDoPlanoConfig(membro)"
+                    >
+                      <i class="bi bi-x-lg"></i> Remover
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
           <div class="user-modal-actions">
             @if (diet.hasPlan()) {
               <button type="button" class="btn btn-outline" (click)="limparDietaAtual()">
@@ -271,7 +357,7 @@
           @for (p of planosDisponiveis; track p.id) {
             <article
               class="plan-tier-card"
-              [class.selected]="account().planoAssinatura === p.id"
+              [class.selected]="planoAtivo() === p.id"
               [class.featured]="p.destaque"
             >
               @if (p.destaque) {
@@ -291,11 +377,11 @@
               <button
                 type="button"
                 class="btn"
-                [class.btn-accent]="account().planoAssinatura !== p.id"
-                [class.btn-primary]="account().planoAssinatura === p.id"
+                [class.btn-accent]="planoAtivo() !== p.id"
+                [class.btn-primary]="planoAtivo() === p.id"
                 (click)="selecionarPlano(p.id)"
               >
-                @if (account().planoAssinatura === p.id) {
+                @if (planoAtivo() === p.id) {
                   <i class="bi bi-check-lg"></i> Plano atual selecionado
                 } @else {
                   Mudar para {{ p.id }}

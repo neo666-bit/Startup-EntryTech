@@ -1,0 +1,255 @@
+<div class="page">
+  <div class="title-actions">
+    <div>
+      <div class="eyebrow">Comunidade e constância</div>
+      <h1>Ofensiva diária com quem caminha com você.</h1>
+      <p class="lead">
+        Adicione amigos pelo e-mail, aceite pedidos de amizade e acompanhe os dias seguidos de foco
+        (streak) e a evolução de cada pessoa na dieta.
+      </p>
+    </div>
+    <div>
+      <button type="button" class="btn btn-outline" (click)="carregarPainel()">
+        <i class="bi bi-arrow-clockwise"></i> Atualizar
+      </button>
+    </div>
+  </div>
+
+  @if (erro()) {
+    <div class="user-toast" style="background: #fdf3f1; border-color: #e09b90; color: #8c2d19; margin-bottom: 18px">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ erro() }}
+    </div>
+  }
+
+  @if (sucesso()) {
+    <div class="user-toast" style="margin-bottom: 18px">
+      <i class="bi bi-check-circle-fill"></i> {{ sucesso() }}
+    </div>
+  }
+
+  <!-- Barra de adicionar amigo no mesmo estilo da busca de Nutricionistas -->
+  <form class="search-bar" (ngSubmit)="enviarPedido()">
+    <span><i class="bi bi-person-plus"></i></span>
+    <input
+      type="email"
+      name="emailBusca"
+      [ngModel]="emailBusca()"
+      (ngModelChange)="emailBusca.set($event)"
+      placeholder="Digite o e-mail do seu amigo para enviar um pedido de amizade (ex.: amigo@gmail.com)"
+    />
+    <span><i class="bi bi-fire"></i> Comparar ofensivas</span>
+    <button type="submit" class="btn btn-primary" [disabled]="carregando()">
+      {{ carregando() ? 'Enviando...' : 'Adicionar amigo' }}
+    </button>
+  </form>
+
+  <div class="stack">
+    <!-- Card da Sua Ofensiva (Streak estilo Duolingo) -->
+    <section class="card">
+      <div class="card-title" style="flex-wrap: wrap">
+        <div style="display: flex; align-items: center; gap: 16px">
+          <div
+            style="width: 58px; height: 58px; border-radius: 14px; background: #fae9e2; color: var(--orange); display: grid; place-items: center; font-size: 28px"
+          >
+            <i class="bi bi-fire"></i>
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom: 4px">Sua ofensiva atual</div>
+            <h2>{{ minhaOfensiva() }} {{ minhaOfensiva() === 1 ? 'dia seguido' : 'dias seguidos' }}</h2>
+            <p style="font-size: 13px; margin: 4px 0 0">
+              Mantenha a chama acesa registrando que você seguiu seu plano alimentar hoje.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn"
+          [class.btn-accent]="!fizCheckinHoje()"
+          [class.btn-primary]="fizCheckinHoje()"
+          (click)="marcarFocoDeHoje()"
+        >
+          <i class="bi bi-fire"></i>
+          {{ fizCheckinHoje() ? 'Foco de hoje concluído' : 'Marcar foco de hoje (+1 dia)' }}
+        </button>
+      </div>
+
+      <div
+        style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line)"
+      >
+        @for (dia of diasSemanaStreak(); track dia.label) {
+          <div
+            style="display: grid; justify-items: center; gap: 7px; padding: 12px 8px; border-radius: 12px"
+            [style.background]="dia.aceso ? '#fae9e2' : '#f8f7f2'"
+            [style.border]="dia.hoje ? '2px solid var(--orange)' : '1px solid var(--line)'"
+          >
+            <small style="font-weight: 700; font-size: 12px; color: var(--text)">{{ dia.label }}</small>
+            <span
+              style="width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 15px"
+              [style.background]="dia.aceso ? 'var(--orange)' : '#e5e9e5'"
+              [style.color]="dia.aceso ? '#fff' : '#8d9891'"
+            >
+              <i class="bi" [class]="dia.aceso ? 'bi-fire' : 'bi-dash'"></i>
+            </span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Pedidos de Amizade Recebidos e Enviados -->
+    @if (pedidosRecebidos().length > 0 || pedidosEnviados().length > 0) {
+      <div class="two-card-layout">
+        <section class="card">
+          <div class="card-title" style="margin-bottom: 14px">
+            <h3><i class="bi bi-inbox"></i> Pedidos recebidos ({{ pedidosRecebidos().length }})</h3>
+          </div>
+          @if (pedidosRecebidos().length === 0) {
+            <p style="font-size: 13px">Nenhum pedido de amizade recebido no momento.</p>
+          } @else {
+            <div class="results">
+              @for (ped of pedidosRecebidos(); track ped.id) {
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #faf9f5; flex-wrap: wrap"
+                >
+                  <div>
+                    <strong style="font-size: 14px">{{ ped.solicitante_nome }}</strong>
+                    <div style="font-size: 12px; color: var(--muted)">{{ ped.solicitante_email }}</div>
+                  </div>
+                  <div style="display: flex; gap: 8px">
+                    <button type="button" class="btn btn-primary" (click)="responderPedido(ped, true)">
+                      <i class="bi bi-check-lg"></i> Aceitar
+                    </button>
+                    <button type="button" class="btn btn-outline" (click)="responderPedido(ped, false)">
+                      Recusar
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="card">
+          <div class="card-title" style="margin-bottom: 14px">
+            <h3><i class="bi bi-send"></i> Pedidos enviados ({{ pedidosEnviados().length }})</h3>
+          </div>
+          @if (pedidosEnviados().length === 0) {
+            <p style="font-size: 13px">Nenhum pedido enviado aguardando resposta.</p>
+          } @else {
+            <div class="results">
+              @for (env of pedidosEnviados(); track env.id) {
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #faf9f5; flex-wrap: wrap"
+                >
+                  <div>
+                    <strong style="font-size: 14px">{{ env.destinatario_nome }}</strong>
+                    <div style="font-size: 12px; color: var(--muted)">{{ env.destinatario_email }}</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px">
+                    <span class="success-pill">Pendente</span>
+                    <button
+                      type="button"
+                      class="btn btn-ghost"
+                      (click)="cancelarOuRemover(env.id, env.destinatario_nome)"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      </div>
+    }
+
+    <!-- Lista de Amigos no mesmo padrão visual dos cards de Nutricionistas -->
+    <div class="results">
+      <div class="results-head">
+        <b>{{ amigos().length }} {{ amigos().length === 1 ? 'amigo conectado' : 'amigos conectados' }}</b>
+        <span class="success-pill"><i class="bi bi-trophy"></i> Ordenado por maior ofensiva</span>
+      </div>
+
+      @if (amigos().length === 0) {
+        <section class="card" style="text-align: center; padding: 36px 24px">
+          <div class="big-icon" style="margin: 0 auto 14px">
+            <i class="bi bi-people"></i>
+          </div>
+          <h3>Nenhum amigo conectado ainda</h3>
+          <p style="max-width: 520px; margin: 0 auto">
+            Use a barra de busca acima para enviar um pedido de amizade pelo e-mail. Quando seu amigo aceitar,
+            a ofensiva diária e a evolução dele aparecerão aqui!
+          </p>
+        </section>
+      } @else {
+        @for (amigo of amigos(); track amigo.amizadeId; let idx = $index) {
+          <section class="card professional" [class.best]="idx === 0">
+            <img [src]="amigo.fotoBase64 || defaultPhoto" [alt]="amigo.nome" />
+
+            <div class="professional-main">
+              <h3>
+                #{{ idx + 1 }} {{ amigo.nome }}
+                @if (idx === 0) {
+                  <span>Líder de ofensiva</span>
+                }
+              </h3>
+              <small>{{ amigo.email }}</small>
+              <p>
+                <i class="bi bi-bullseye"></i> {{ amigo.objetivoTexto }}
+                @if (amigo.metaKcal) {
+                  • Meta: {{ amigo.metaKcal }} kcal/dia
+                }
+                @if (amigo.ultimoPesoKg) {
+                  • Último peso: {{ amigo.ultimoPesoKg }} kg
+                }
+              </p>
+
+              <div style="max-width: 420px; margin-top: 8px">
+                <div class="profile-line" style="font-size: 12px">
+                  <span>Progresso até a meta de peso</span>
+                  <b>{{ amigo.progressoMetaPct }}%</b>
+                </div>
+                <div class="mini-progress" style="height: 7px">
+                  <i [style.width.%]="amigo.progressoMetaPct"></i>
+                </div>
+              </div>
+
+              <div class="chips" style="margin-top: 10px">
+                <span class="chip">
+                  <i class="bi bi-fire"></i> {{ amigo.incentivos }} incentivos recebidos
+                </span>
+                <span class="chip">
+                  {{ amigo.temDietaAtiva ? 'Plano alimentar ativo' : 'Montando plano' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="professional-price">
+              <strong style="color: var(--orange)">
+                <i class="bi bi-fire"></i> {{ amigo.ofensivaDias }}d
+              </strong>
+              <small>dias seguidos de foco</small>
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="idx === 0"
+                [class.btn-outline]="idx !== 0"
+                (click)="mandarIncentivo(amigo)"
+              >
+                <i class="bi bi-fire"></i> Incentivar
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost"
+                style="min-height: 30px; padding: 4px 8px; font-size: 11px"
+                (click)="cancelarOuRemover(amigo.amizadeId, amigo.nome)"
+              >
+                Desfazer amizade
+              </button>
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </div>
+</div>

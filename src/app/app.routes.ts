@@ -9,6 +9,7 @@ import { AgendarConsulta } from './agendar-consulta/agendar-consulta';
 import { ConsultaConfirmada } from './consulta-confirmada/consulta-confirmada';
 import { AnaliseFoto } from './analise-foto/analise-foto';
 import { Progresso } from './progresso/progresso';
+import { Amigos } from './amigos/amigos';
 import { LandingPage } from './components/landing-page/landing-page';
 import { Login } from './components/autenticacao/login/login';
 import { Registrar } from './components/autenticacao/registrar/registrar';
@@ -33,6 +34,7 @@ export const routes: Routes = [
       { path: 'consulta-confirmada', component: ConsultaConfirmada },
       { path: 'analise-foto', component: AnaliseFoto },
       { path: 'progresso', component: Progresso },
+      { path: 'amigos', component: Amigos },
     ],
   },
   {

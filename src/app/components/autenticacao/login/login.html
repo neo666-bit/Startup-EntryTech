@@ -37,10 +37,33 @@
     <section class="auth-card">
       <span class="sobretitulo">Acesso à conta</span>
       <h2>Entrar no NutriSync</h2>
-      <p class="subtitulo">Use o e-mail e a senha cadastrados para abrir seu painel.</p>
+      <p class="subtitulo">Use o e-mail confirmado e a senha cadastrados para abrir seu painel.</p>
+
+      @if (avisoSucesso()) {
+        <div
+          class="alerta"
+          style="background: #eef7f1; border: 1px solid #9dc7ae; color: #1f5c3f; padding: 12px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px"
+          role="status"
+        >
+          <i class="bi bi-check-circle-fill"></i> {{ avisoSucesso() }}
+        </div>
+      }
 
       @if (erro()) {
-        <div class="alerta alerta-erro" role="alert">{{ erro() }}</div>
+        <div class="alerta alerta-erro" role="alert">
+          <div><i class="bi bi-exclamation-triangle-fill"></i> {{ erro() }}</div>
+          @if (emailNaoConfirmado()) {
+            <button
+              type="button"
+              style="margin-top: 10px; background: #fff; border: 1px solid #d1877b; color: #8c2d19; padding: 7px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer"
+              [disabled]="reenviando()"
+              (click)="reenviarConfirmacao()"
+            >
+              <i class="bi bi-envelope-arrow-up"></i>
+              {{ reenviando() ? 'Reenviando e-mail...' : 'Reenviar e-mail de confirmação' }}
+            </button>
+          }
+        </div>
       }
 
       <form class="auth-form" (ngSubmit)="entrar()">
@@ -86,7 +109,7 @@
         </div>
 
         <button type="submit" class="btn-submit" [disabled]="carregando()">
-          {{ carregando() ? 'Entrando...' : 'Entrar na minha conta' }}
+          {{ carregando() ? 'Verificando e entrando...' : 'Entrar na minha conta' }}
         </button>
       </form>
 

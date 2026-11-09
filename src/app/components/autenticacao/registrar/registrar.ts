@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { DietService } from '../../../nutrisync/diet.service';
+import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../../nutrisync/supabase.service';
 
 @Component({
@@ -11,9 +10,7 @@ import { SupabaseService } from '../../../nutrisync/supabase.service';
   styleUrl: './registrar.css',
 })
 export class Registrar {
-  private readonly router = inject(Router);
   private readonly supabase = inject(SupabaseService);
-  private readonly diet = inject(DietService);
 
   readonly nome = signal('');
   readonly email = signal('');
@@ -29,8 +26,10 @@ export class Registrar {
   readonly fotoNome = signal<string>('');
 
   readonly carregando = signal(false);
+  readonly reenviando = signal(false);
   readonly erro = signal('');
   readonly sucesso = signal('');
+  readonly aguardandoConfirmacaoEmail = signal(false);
 
   readonly estados = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO',
@@ -112,13 +111,7 @@ export class Registrar {
 
     this.carregando.set(true);
     try {
-      const existentePg = await this.supabase.buscarUsuarioPorEmail(email);
-      if (existentePg) {
-        this.erro.set('Este e-mail já está cadastrado no banco de dados. Tente entrar na sua conta.');
-        return;
-      }
-
-      const criado = await this.supabase.cadastrarUsuario({
+      const res = await this.supabase.registrarComVerificacaoEmail({
         nome,
         email,
         senha,
@@ -129,18 +122,30 @@ export class Registrar {
         fotoMime: this.fotoMime(),
       });
 
-      if (!criado) {
-        this.erro.set('Não foi possível salvar o cadastro no banco de dados. Tente novamente.');
+      if (!res.ok) {
+        this.erro.set(res.erro ?? 'Não foi possível criar a conta. Verifique os dados informados.');
         return;
       }
 
-      this.supabase.definirEmailSessao(criado.email);
-      await this.diet.carregarDoBanco(criado.email);
-
-      this.sucesso.set('Conta criada no banco com sucesso! Redirecionando para o seu plano...');
-      await this.router.navigateByUrl('/montar-dieta');
+      this.aguardandoConfirmacaoEmail.set(true);
+      this.sucesso.set(`Enviamos um e-mail de confirmação para ${email}!`);
     } finally {
       this.carregando.set(false);
+    }
+  }
+
+  async reenviarEmail(): Promise<void> {
+    this.erro.set('');
+    this.reenviando.set(true);
+    try {
+      const res = await this.supabase.reenviarEmailConfirmacao(this.email());
+      if (res.ok) {
+        this.sucesso.set(res.mensagem);
+      } else {
+        this.erro.set(res.mensagem);
+      }
+    } finally {
+      this.reenviando.set(false);
     }
   }
 }

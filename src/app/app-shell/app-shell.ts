@@ -5,7 +5,7 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter, map } from 'rxjs';
 import { marinaPhoto } from '../nutrisync-data';
 import { DietService } from '../nutrisync/diet.service';
-import { SupabaseService } from '../nutrisync/supabase.service';
+import { PlanoAssinatura, SupabaseAmigoRow, SupabaseService } from '../nutrisync/supabase.service';
 
 export type UserModalKind = 'configuracoes' | 'planos' | 'suporte' | null;
 
@@ -17,7 +17,7 @@ export interface UserAccount {
   fotoBase64: string | null;
   fotoMime?: string | null;
   fotoNomeArquivo?: string | null;
-  planoAssinatura: 'Essencial' | 'Plano Equilíbrio' | 'Plano Acompanhamento';
+  planoAssinatura: PlanoAssinatura;
   lembretesAgua: boolean;
   resumoSemanalEmail: boolean;
 }
@@ -59,6 +59,12 @@ export class AppShell {
   protected readonly configSaved = signal('');
   protected readonly photoUploadError = signal('');
 
+  // Gerenciamento de vagas do plano (Plano Dupla = 1 amigo | Plano Família = 3 amigos) dentro de Configurações
+  protected readonly amigosPlano = signal<SupabaseAmigoRow[]>([]);
+  protected readonly emailAmigoPlano = signal('');
+  protected readonly erroAmigoPlano = signal('');
+  protected readonly carregandoAmigoPlano = signal(false);
+
   // Campos de suporte
   protected readonly suporteAssunto = signal('Dúvida sobre meu plano alimentar');
   protected readonly suporteMensagem = signal('');
@@ -71,7 +77,7 @@ export class AppShell {
   ];
 
   protected readonly planosDisponiveis: Array<{
-    id: UserAccount['planoAssinatura'];
+    id: PlanoAssinatura;
     preco: string;
     periodo: string;
     destaque?: boolean;
@@ -82,7 +88,7 @@ export class AppShell {
       id: 'Essencial',
       preco: 'Grátis',
       periodo: 'para sempre',
-      descricao: 'Para começar a organizar sua alimentação com cálculo energético real.',
+      descricao: 'Plano individual para começar a organizar sua alimentação com cálculo real.',
       recursos: [
         'Cálculo de calorias e macronutrientes (Mifflin-St Jeor)',
         'Cardápio semanal de 7 dias adaptado a restrições',
@@ -93,25 +99,35 @@ export class AppShell {
       id: 'Plano Equilíbrio',
       preco: 'R$ 29,90',
       periodo: '/mês',
-      destaque: true,
-      descricao: 'Flexibilidade completa para adaptar os pratos e registrar sua rotina.',
+      descricao: 'Flexibilidade individual completa para adaptar os pratos e registrar sua rotina.',
       recursos: [
-        'Tudo do plano Essencial',
+        'Tudo do plano Essencial (uso individual)',
         'Troca ilimitada de pratos mantendo calorias e macros',
         'Análise de pratos por foto com substituição no dia',
         'Gráfico completo de evolução de peso e metas',
       ],
     },
     {
-      id: 'Plano Acompanhamento',
-      preco: 'R$ 149,90',
+      id: 'Plano Dupla',
+      preco: 'R$ 49,90',
       periodo: '/mês',
-      descricao: 'Cuidado próximo com nutricionista dedicada revisando seu plano.',
+      destaque: true,
+      descricao: 'Para 2 pessoas: compartilhe o plano convidando 1 amigo pelo e-mail.',
       recursos: [
-        'Tudo do Plano Equilíbrio',
-        '1 consulta online mensal (50 min) inclusa',
-        'Compartilhamento automático de dieta e progresso',
-        'Canal direto para tirar dúvidas com a nutricionista',
+        'Tudo do Plano Equilíbrio para você + 1 amigo',
+        'Convide 1 amigo pelo e-mail na aba Amigos',
+        'Dietas, restrições e metas 100% individuais para cada um',
+      ],
+    },
+    {
+      id: 'Plano Família',
+      preco: 'R$ 89,90',
+      periodo: '/mês',
+      descricao: 'Até 4 pessoas: você pode convidar até 3 amigos ou familiares pelo e-mail.',
+      recursos: [
+        'Tudo do Plano Equilíbrio para até 4 pessoas',
+        'Convide até 3 amigos pelo e-mail na aba Amigos',
+        'Cardápios e acompanhamento de peso independentes',
       ],
     },
   ];
@@ -132,6 +148,13 @@ export class AppShell {
   ];
 
   protected readonly avatarUrl = computed(() => this.account().fotoBase64 || this.defaultPhoto);
+  protected readonly planoAtivo = computed(() => this.supabase.planoAssinaturaAtual());
+  protected readonly limiteAmigosPlano = computed(() => {
+    const p = this.planoAtivo();
+    if (p === 'Plano Dupla') return 1;
+    if (p === 'Plano Família') return 3;
+    return 0;
+  });
 
   protected readonly nav = [
     { path: '/home', label: 'Painel', icon: 'bi-grid' },
@@ -139,6 +162,7 @@ export class AppShell {
     { path: '/progresso', label: 'Progresso', icon: 'bi-graph-up-arrow' },
     { path: '/nutricionistas', label: 'Nutricionistas', icon: 'bi-people' },
     { path: '/analise-foto', label: 'Análise por foto', icon: 'bi-camera' },
+    { path: '/amigos', label: 'Amigos', icon: 'bi-person-plus' },
   ];
 
   private readonly url = toSignal(
@@ -172,6 +196,8 @@ export class AppShell {
       return;
     }
 
+    const plano = usuarioBanco.plano_assinatura ?? 'Plano Equilíbrio';
+    this.supabase.planoAssinaturaAtual.set(plano);
     this.account.set({
       nome: usuarioBanco.nome,
       email: usuarioBanco.email,
@@ -180,10 +206,17 @@ export class AppShell {
       fotoBase64: usuarioBanco.foto_perfil_base64 ?? null,
       fotoMime: usuarioBanco.foto_perfil_mime ?? null,
       fotoNomeArquivo: null,
-      planoAssinatura: usuarioBanco.plano_assinatura ?? 'Plano Equilíbrio',
+      planoAssinatura: plano,
       lembretesAgua: usuarioBanco.lembretes_agua ?? true,
       resumoSemanalEmail: usuarioBanco.resumo_semanal_email ?? true,
     });
+    const listaPlano = await this.supabase.listarAmigosDoPlano(usuarioBanco.email);
+    this.amigosPlano.set(listaPlano);
+  }
+
+  protected irParaAmigos(): void {
+    this.closeAll();
+    void this.router.navigateByUrl('/amigos');
   }
 
   protected toggleUserMenu(event: Event): void {
@@ -195,8 +228,75 @@ export class AppShell {
     this.menuOpen.set(false);
     this.configSaved.set('');
     this.photoUploadError.set('');
+    this.erroAmigoPlano.set('');
     this.suporteProtocolo.set('');
     this.activeModal.set(kind);
+    if (kind === 'configuracoes') {
+      void this.recarregarAmigosPlano();
+    }
+  }
+
+  private async recarregarAmigosPlano(): Promise<void> {
+    const email = this.account().email || this.supabase.lerEmailSessao();
+    if (!email) return;
+    const lista = await this.supabase.listarAmigosDoPlano(email);
+    this.amigosPlano.set(lista);
+  }
+
+  protected async adicionarAmigoAoPlanoConfig(): Promise<void> {
+    this.erroAmigoPlano.set('');
+    this.configSaved.set('');
+
+    const email = this.emailAmigoPlano().trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      this.erroAmigoPlano.set('Informe um e-mail válido do amigo para vincular ao plano.');
+      return;
+    }
+
+    const limite = this.limiteAmigosPlano();
+    if (limite === 0) {
+      this.erroAmigoPlano.set(
+        'Seu plano atual é individual. Escolha o Plano Dupla (1 amigo) ou Plano Família (até 3 amigos) para convidar.',
+      );
+      return;
+    }
+
+    if (this.amigosPlano().length >= limite) {
+      this.erroAmigoPlano.set(
+        this.planoAtivo() === 'Plano Dupla'
+          ? 'Limite de 1 amigo do Plano Dupla atingido. Mude para o Plano Família para até 3 amigos.'
+          : 'Limite de 3 amigos do Plano Família atingido.',
+      );
+      return;
+    }
+
+    if (this.amigosPlano().some((a) => a.email_amigo.toLowerCase() === email)) {
+      this.erroAmigoPlano.set('Este e-mail já está vinculado ao seu plano.');
+      return;
+    }
+
+    this.carregandoAmigoPlano.set(true);
+    try {
+      const res = await this.supabase.adicionarAmigoPorEmail(email);
+      if (!res.ok || !res.amigo) {
+        this.erroAmigoPlano.set(res.erro ?? 'Não foi possível adicionar ao plano.');
+        return;
+      }
+      this.amigosPlano.update((atuais) => [...atuais, res.amigo!]);
+      this.emailAmigoPlano.set('');
+      this.configSaved.set(`${res.amigo.email_amigo} foi adicionado ao seu ${this.planoAtivo()}!`);
+    } finally {
+      this.carregandoAmigoPlano.set(false);
+    }
+  }
+
+  protected async removerAmigoDoPlanoConfig(amigo: SupabaseAmigoRow): Promise<void> {
+    this.erroAmigoPlano.set('');
+    const ok = await this.supabase.removerAmigoDoPlano(amigo.id);
+    if (ok) {
+      this.amigosPlano.update((atuais) => atuais.filter((a) => a.id !== amigo.id));
+      this.configSaved.set(`${amigo.email_amigo} foi removido do seu plano.`);
+    }
   }
 
   protected closeAll(): void {

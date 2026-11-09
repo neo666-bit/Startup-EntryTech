@@ -16,8 +16,8 @@
         <span class="etiqueta">Comece no seu ritmo</span>
         <h1 class="titulo-editorial">Uma alimentação possível, gostosa e só sua.</h1>
         <p class="descricao-editorial">
-          Em menos de 4 minutos após criar sua conta, você informa sua rotina e recebe um plano
-          alimentar completo, calculado para a sua realidade.
+          Em menos de 4 minutos após criar e confirmar sua conta, você informa sua rotina e recebe um
+          plano alimentar completo, calculado para a sua realidade.
         </p>
 
         <div class="passos-resumo">
@@ -31,8 +31,8 @@
           <div class="passo-item">
             <span>2</span>
             <div>
-              <strong>Calcule sua meta diária</strong>
-              <small>Fórmula Mifflin-St Jeor ajustada ao seu nível de atividade.</small>
+              <strong>Confirme seu e-mail</strong>
+              <small>Clique no link enviado para o seu e-mail para ativar sua conta.</small>
             </div>
           </div>
           <div class="passo-item">
@@ -53,155 +53,199 @@
     </section>
 
     <section class="auth-card">
-      <span class="sobretitulo">Criar conta gratuita</span>
-      <h2>Comece sua jornada no NutriSync</h2>
-      <p class="subtitulo">Preencha seus dados abaixo para montar seu primeiro plano alimentar.</p>
+      @if (aguardandoConfirmacaoEmail()) {
+        <div style="text-align: center; padding: 14px 6px; display: grid; gap: 14px">
+          <div
+            style="width: 68px; height: 68px; border-radius: 50%; background: #eef7f1; color: #1f5c3f; display: grid; place-items: center; font-size: 32px; margin: 0 auto"
+          >
+            <i class="bi bi-envelope-check-fill"></i>
+          </div>
 
-      @if (erro()) {
-        <div class="alerta alerta-erro" role="alert">{{ erro() }}</div>
-      }
-      @if (sucesso()) {
-        <div class="alerta alerta-sucesso" role="status">{{ sucesso() }}</div>
-      }
+          <span class="sobretitulo">Verificação de segurança</span>
+          <h2 style="margin: 0">Confirme seu e-mail para entrar</h2>
 
-      <div class="seletor-perfil" role="radiogroup" aria-label="Tipo de conta">
-        <button
-          type="button"
-          class="perfil-btn"
-          [class.ativo]="perfil() === 'paciente'"
-          (click)="perfil.set('paciente')"
-        >
-          <strong>Quero cuidar da alimentação</strong>
-          <small>Criar dieta, ver receitas e progresso</small>
-        </button>
-        <button
-          type="button"
-          class="perfil-btn"
-          [class.ativo]="perfil() === 'nutricionista'"
-          (click)="perfil.set('nutricionista')"
-        >
-          <strong>Sou nutricionista</strong>
-          <small>Acompanhar pacientes e planos</small>
-        </button>
-      </div>
+          <p class="subtitulo" style="margin: 0">
+            Enviamos um link de confirmação para <b>{{ email() }}</b>. Abra sua caixa de entrada (ou a
+            pasta de <b>Spam / Lixo eletrônico</b>) e clique no link para liberar o login na sua conta.
+          </p>
 
-      <form class="auth-form" (ngSubmit)="verificarSenha()">
-        <label class="campo">
-          <span>Nome completo</span>
-          <input
-            type="text"
-            name="nome"
-            placeholder="Ex.: Marina Costa"
-            autocomplete="name"
-            [ngModel]="nome()"
-            (ngModelChange)="nome.set($event)"
-          />
-        </label>
-
-        <label class="campo">
-          <span>E-mail</span>
-          <input
-            type="email"
-            name="email"
-            placeholder="voce@exemplo.com"
-            autocomplete="email"
-            [ngModel]="email()"
-            (ngModelChange)="email.set($event)"
-          />
-        </label>
-
-        <div class="duas-colunas-form">
-          <label class="campo">
-            <span>Telefone / WhatsApp</span>
-            <input
-              type="tel"
-              name="telefone"
-              placeholder="(11) 99999-9999"
-              autocomplete="tel"
-              [ngModel]="telefone()"
-              (ngModelChange)="telefone.set($event)"
-            />
-          </label>
-
-          <label class="campo">
-            <span>Estado (UF)</span>
-            <select
-              name="estado"
-              [ngModel]="estado()"
-              (ngModelChange)="estado.set($event)"
-            >
-              @for (uf of estados; track uf) {
-                <option [value]="uf">{{ uf }}</option>
-              }
-            </select>
-          </label>
-        </div>
-
-        <div class="duas-colunas-form">
-          <label class="campo">
-            <div class="campo-topo">
-              <span>Senha</span>
-              <button type="button" class="link-inline" (click)="alternarSenha()">
-                {{ mostrarSenha() ? 'Ocultar' : 'Mostrar' }}
-              </button>
-            </div>
-            <input
-              [type]="mostrarSenha() ? 'text' : 'password'"
-              name="senha"
-              placeholder="Mínimo de 6 caracteres"
-              autocomplete="new-password"
-              [ngModel]="senha()"
-              (ngModelChange)="senha.set($event)"
-            />
-          </label>
-
-          <label class="campo">
-            <span>Confirmar senha</span>
-            <input
-              [type]="mostrarSenha() ? 'text' : 'password'"
-              name="confirmar"
-              placeholder="Repita a senha"
-              autocomplete="new-password"
-              [ngModel]="confirmar()"
-              (ngModelChange)="confirmar.set($event)"
-            />
-          </label>
-        </div>
-
-        <div class="campo">
-          <span>Foto de perfil — arquivo PNG ou JPG (opcional)</span>
-          <input
-            type="file"
-            accept=".png,.jpg,.jpeg,image/png,image/jpeg,image/webp"
-            (change)="selecionarFotoArquivo($event)"
-          />
-          @if (fotoNome()) {
-            <small style="color: #1f5c3f; font-weight: 600">
-              <i class="bi bi-check-circle-fill"></i> Arquivo selecionado: {{ fotoNome() }}
-            </small>
+          @if (erro()) {
+            <div class="alerta alerta-erro" role="alert">{{ erro() }}</div>
           }
+          @if (sucesso()) {
+            <div class="alerta alerta-sucesso" role="status">{{ sucesso() }}</div>
+          }
+
+          <a
+            routerLink="/login"
+            class="btn-submit"
+            style="text-decoration: none; display: inline-flex; justify-content: center; align-items: center; gap: 8px"
+          >
+            <i class="bi bi-box-arrow-in-right"></i> Já confirmei meu e-mail — Ir para o Login
+          </a>
+
+          <button
+            type="button"
+            class="btn-outline-sm"
+            style="width: 100%; padding: 11px; justify-content: center; cursor: pointer"
+            [disabled]="reenviando()"
+            (click)="reenviarEmail()"
+          >
+            <i class="bi bi-envelope-arrow-up"></i>
+            {{ reenviando() ? 'Reenviando...' : 'Não recebeu? Reenviar e-mail de confirmação' }}
+          </button>
+        </div>
+      } @else {
+        <span class="sobretitulo">Criar conta gratuita</span>
+        <h2>Comece sua jornada no NutriSync</h2>
+        <p class="subtitulo">Preencha seus dados abaixo. Enviaremos um link de confirmação para o seu e-mail.</p>
+
+        @if (erro()) {
+          <div class="alerta alerta-erro" role="alert">{{ erro() }}</div>
+        }
+        @if (sucesso()) {
+          <div class="alerta alerta-sucesso" role="status">{{ sucesso() }}</div>
+        }
+
+        <div class="seletor-perfil" role="radiogroup" aria-label="Tipo de conta">
+          <button
+            type="button"
+            class="perfil-btn"
+            [class.ativo]="perfil() === 'paciente'"
+            (click)="perfil.set('paciente')"
+          >
+            <strong>Quero cuidar da alimentação</strong>
+            <small>Criar dieta, ver receitas e progresso</small>
+          </button>
+          <button
+            type="button"
+            class="perfil-btn"
+            [class.ativo]="perfil() === 'nutricionista'"
+            (click)="perfil.set('nutricionista')"
+          >
+            <strong>Sou nutricionista</strong>
+            <small>Acompanhar pacientes e planos</small>
+          </button>
         </div>
 
-        <label class="check-termos">
-          <input
-            type="checkbox"
-            name="termos"
-            [ngModel]="aceitouTermos()"
-            (ngModelChange)="aceitouTermos.set($event)"
-          />
-          <span>Concordo com os termos de uso e com a proteção dos meus dados de saúde.</span>
-        </label>
+        <form class="auth-form" (ngSubmit)="verificarSenha()">
+          <label class="campo">
+            <span>Nome completo</span>
+            <input
+              type="text"
+              name="nome"
+              placeholder="Ex.: Marina Costa"
+              autocomplete="name"
+              [ngModel]="nome()"
+              (ngModelChange)="nome.set($event)"
+            />
+          </label>
 
-        <button type="submit" class="btn-submit" [disabled]="carregando()">
-          {{ carregando() ? 'Criando sua conta...' : 'Criar minha conta e montar dieta' }}
-          <i class="bi bi-arrow-right"></i>
-        </button>
-      </form>
+          <label class="campo">
+            <span>E-mail (você receberá um link de confirmação)</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="voce@exemplo.com"
+              autocomplete="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+            />
+          </label>
 
-      <p class="rodape-card">
-        Já tem uma conta no NutriSync?
-        <a routerLink="/login">Fazer login</a>
-      </p>
+          <div class="duas-colunas-form">
+            <label class="campo">
+              <span>Telefone / WhatsApp</span>
+              <input
+                type="tel"
+                name="telefone"
+                placeholder="(11) 99999-9999"
+                autocomplete="tel"
+                [ngModel]="telefone()"
+                (ngModelChange)="telefone.set($event)"
+              />
+            </label>
+
+            <label class="campo">
+              <span>Estado (UF)</span>
+              <select
+                name="estado"
+                [ngModel]="estado()"
+                (ngModelChange)="estado.set($event)"
+              >
+                @for (uf of estados; track uf) {
+                  <option [value]="uf">{{ uf }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <div class="duas-colunas-form">
+            <label class="campo">
+              <div class="campo-topo">
+                <span>Senha</span>
+                <button type="button" class="link-inline" (click)="alternarSenha()">
+                  {{ mostrarSenha() ? 'Ocultar' : 'Mostrar' }}
+                </button>
+              </div>
+              <input
+                [type]="mostrarSenha() ? 'text' : 'password'"
+                name="senha"
+                placeholder="Mínimo de 6 caracteres"
+                autocomplete="new-password"
+                [ngModel]="senha()"
+                (ngModelChange)="senha.set($event)"
+              />
+            </label>
+
+            <label class="campo">
+              <span>Confirmar senha</span>
+              <input
+                [type]="mostrarSenha() ? 'text' : 'password'"
+                name="confirmar"
+                placeholder="Repita a senha"
+                autocomplete="new-password"
+                [ngModel]="confirmar()"
+                (ngModelChange)="confirmar.set($event)"
+              />
+            </label>
+          </div>
+
+          <div class="campo">
+            <span>Foto de perfil — arquivo PNG ou JPG (opcional)</span>
+            <input
+              type="file"
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg,image/webp"
+              (change)="selecionarFotoArquivo($event)"
+            />
+            @if (fotoNome()) {
+              <small style="color: #1f5c3f; font-weight: 600">
+                <i class="bi bi-check-circle-fill"></i> Arquivo selecionado: {{ fotoNome() }}
+              </small>
+            }
+          </div>
+
+          <label class="check-termos">
+            <input
+              type="checkbox"
+              name="termos"
+              [ngModel]="aceitouTermos()"
+              (ngModelChange)="aceitouTermos.set($event)"
+            />
+            <span>Concordo com os termos de uso e com a proteção dos meus dados de saúde.</span>
+          </label>
+
+          <button type="submit" class="btn-submit" [disabled]="carregando()">
+            {{ carregando() ? 'Enviando e-mail de confirmação...' : 'Criar minha conta e enviar confirmação' }}
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </form>
+
+        <p class="rodape-card">
+          Já tem uma conta no NutriSync?
+          <a routerLink="/login">Fazer login</a>
+        </p>
+      }
     </section>
   </main>
 </div>

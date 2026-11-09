@@ -471,7 +471,7 @@ blockquote p { grid-column: 1/-1; margin: 5px 0 0; }
   .prefs-box { background: #faf9f5; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
   .user-modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; padding-top: 6px; }
 
-  .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .plans-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .plan-tier-card { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 20px 18px; background: #faf9f5; display: flex; flex-direction: column; gap: 10px; }
   .plan-tier-card.featured { background: #fff; border-color: var(--green); }
   .plan-tier-card.selected { border: 2px solid var(--green); background: #f2f7f4; }

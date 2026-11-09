@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     tipo_perfil VARCHAR(20) NOT NULL DEFAULT 'paciente'
         CHECK (tipo_perfil IN ('paciente', 'nutricionista')),
     plano_assinatura VARCHAR(30) NOT NULL DEFAULT 'Plano Equilíbrio'
-        CHECK (plano_assinatura IN ('Essencial', 'Plano Equilíbrio', 'Plano Acompanhamento')),
+        CHECK (plano_assinatura IN ('Essencial', 'Plano Equilíbrio', 'Plano Dupla', 'Plano Família')),
     -- A foto é enviada do aparelho do usuário (upload de arquivo) e salva direto no banco
     -- (em Base64 ou binário BYTEA), sem que a pessoa precise digitar nenhuma URL:
     foto_perfil_base64 TEXT,
@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     foto_perfil_mime VARCHAR(40),
     lembretes_agua BOOLEAN NOT NULL DEFAULT TRUE,
     resumo_semanal_email BOOLEAN NOT NULL DEFAULT TRUE,
+    email_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+    ofensiva_dias INTEGER NOT NULL DEFAULT 1,
+    ultimo_checkin_ofensiva DATE DEFAULT CURRENT_DATE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -291,7 +294,41 @@ CREATE TABLE IF NOT EXISTS chamados_suporte (
 );
 
 -- -----------------------------------------------------------------------------
--- 10. PERMISSÕES E DESATIVAÇÃO DE RLS PARA USO DIRETO COM A API DO SUPABASE
+-- 10. AMIGOS CONVIDADOS DO PLANO (Plano Dupla: 1 amigo | Plano Família: até 3 amigos)
+--     Gerenciado dentro do modal de Configurações da conta
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS amigos_plano (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titular_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    amigo_usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    nome_amigo VARCHAR(120) NOT NULL,
+    email_amigo VARCHAR(160) NOT NULL,
+    status VARCHAR(25) NOT NULL DEFAULT 'ativo'
+        CHECK (status IN ('ativo', 'convite_pendente')),
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (titular_id, email_amigo)
+);
+
+-- -----------------------------------------------------------------------------
+-- 11. AMIZADES E STREAK / OFENSIVA (Aba Amigos — pedidos, aceites e progresso)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS amizades (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    solicitante_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    solicitante_nome VARCHAR(120) NOT NULL,
+    solicitante_email VARCHAR(160) NOT NULL,
+    destinatario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    destinatario_nome VARCHAR(120) NOT NULL,
+    destinatario_email VARCHAR(160) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente'
+        CHECK (status IN ('pendente', 'aceita', 'recusada')),
+    incentivos INTEGER NOT NULL DEFAULT 0,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (solicitante_email, destinatario_email)
+);
+
+-- -----------------------------------------------------------------------------
+-- 12. PERMISSÕES E DESATIVAÇÃO DE RLS PARA USO DIRETO COM A API DO SUPABASE
 -- -----------------------------------------------------------------------------
 ALTER TABLE usuarios DISABLE ROW LEVEL SECURITY;
 ALTER TABLE perfis_nutricionais DISABLE ROW LEVEL SECURITY;
@@ -307,6 +344,8 @@ ALTER TABLE registros_peso DISABLE ROW LEVEL SECURITY;
 ALTER TABLE nutricionistas DISABLE ROW LEVEL SECURITY;
 ALTER TABLE consultas DISABLE ROW LEVEL SECURITY;
 ALTER TABLE chamados_suporte DISABLE ROW LEVEL SECURITY;
+ALTER TABLE amigos_plano DISABLE ROW LEVEL SECURITY;
+ALTER TABLE amizades DISABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN

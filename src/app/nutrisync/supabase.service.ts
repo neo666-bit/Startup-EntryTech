@@ -3,6 +3,12 @@ import { FOOD_CATALOG } from './food-catalog';
 import { DayPlan, DietPlan, Goal, Pattern, PlannedMeal, Sex, Slot, UserProfile, WeightEntry } from './models';
 import { isSupabaseConfigured, SUPABASE_CONFIG } from './supabase.config';
 
+export type PlanoAssinatura =
+  | 'Essencial'
+  | 'Plano Equilíbrio'
+  | 'Plano Dupla'
+  | 'Plano Família';
+
 export interface SupabaseUsuarioRow {
   id: string;
   nome: string;
@@ -11,11 +17,52 @@ export interface SupabaseUsuarioRow {
   telefone: string | null;
   estado_uf: string;
   tipo_perfil: 'paciente' | 'nutricionista';
-  plano_assinatura: 'Essencial' | 'Plano Equilíbrio' | 'Plano Acompanhamento';
+  plano_assinatura: PlanoAssinatura;
   foto_perfil_base64: string | null;
   foto_perfil_mime?: string | null;
   lembretes_agua: boolean;
   resumo_semanal_email: boolean;
+  email_verificado?: boolean;
+  ofensiva_dias?: number;
+  ultimo_checkin_ofensiva?: string | null;
+}
+
+export interface SupabaseAmigoRow {
+  id: string;
+  titular_id: string;
+  amigo_usuario_id: string | null;
+  nome_amigo: string;
+  email_amigo: string;
+  status: 'ativo' | 'convite_pendente';
+  criado_em: string;
+}
+
+export interface SupabaseAmizadeRow {
+  id: string;
+  solicitante_id: string;
+  solicitante_nome: string;
+  solicitante_email: string;
+  destinatario_id: string | null;
+  destinatario_nome: string;
+  destinatario_email: string;
+  status: 'pendente' | 'aceita' | 'recusada';
+  incentivos: number;
+  criado_em: string;
+}
+
+export interface AmigoComProgresso {
+  amizadeId: string;
+  nome: string;
+  email: string;
+  fotoBase64: string | null;
+  ofensivaDias: number;
+  fezCheckinHoje: boolean;
+  temDietaAtiva: boolean;
+  objetivoTexto: string;
+  metaKcal: number | null;
+  progressoMetaPct: number;
+  ultimoPesoKg: number | null;
+  incentivos: number;
 }
 
 export interface SupabaseNutricionistaRow {
@@ -40,6 +87,7 @@ const LEGACY_KEYS = ['nutrisync.plan.v1', 'nutrisync.usuarios.v1', 'nutrisync.se
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   readonly emailAutenticado = signal<string | null>(this.lerEmailSessao());
+  readonly planoAssinaturaAtual = signal<PlanoAssinatura>('Plano Equilíbrio');
 
   constructor() {
     this.limparDadosLocaisAntigos();
@@ -91,6 +139,262 @@ export class SupabaseService {
   private restUrl(tableAndQuery: string): string {
     const base = SUPABASE_CONFIG.url.trim().replace(/\/+$/, '');
     return `${base}/rest/v1/${tableAndQuery}`;
+  }
+
+  private authUrl(pathAndQuery: string): string {
+    const base = SUPABASE_CONFIG.url.trim().replace(/\/+$/, '');
+    return `${base}/auth/v1/${pathAndQuery}`;
+  }
+
+  /**
+   * Registra o usuário no Supabase Auth (que dispara o e-mail real de confirmação)
+   * e cria o registro correspondente na tabela `usuarios` do PostgreSQL.
+   */
+  async registrarComVerificacaoEmail(dados: {
+    nome: string;
+    email: string;
+    senha: string;
+    telefone: string;
+    estado: string;
+    perfil: 'paciente' | 'nutricionista';
+    fotoBase64?: string | null;
+    fotoMime?: string | null;
+  }): Promise<{ ok: boolean; erro?: string; usuario?: SupabaseUsuarioRow }> {
+    if (!isSupabaseConfigured()) {
+      return { ok: false, erro: 'Banco de dados Supabase não configurado.' };
+    }
+
+    const emailLimpo = dados.email.trim().toLowerCase();
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4200';
+      const redirectTo = encodeURIComponent(`${origin}/login?verificado=1`);
+
+      // 1. Cria a conta no Supabase Auth para enviar o e-mail de confirmação
+      const authRes = await fetch(this.authUrl(`signup?redirect_to=${redirectTo}`), {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_CONFIG.anonKey.trim(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailLimpo,
+          password: dados.senha,
+          data: {
+            nome: dados.nome,
+            telefone: dados.telefone,
+            estado_uf: dados.estado,
+            tipo_perfil: dados.perfil,
+          },
+        }),
+      });
+
+      const authBody = (await authRes.json().catch(() => ({}))) as {
+        error_code?: string;
+        msg?: string;
+        message?: string;
+        identities?: unknown[];
+      };
+
+      if (!authRes.ok) {
+        if (authBody.error_code === 'user_already_exists' || (authBody.msg ?? '').includes('already registered')) {
+          return {
+            ok: false,
+            erro: 'Este e-mail já está cadastrado. Confirme seu e-mail na caixa de entrada ou faça login.',
+          };
+        }
+        if (authBody.error_code === 'over_email_send_rate_limit') {
+          return {
+            ok: false,
+            erro: 'Muitas tentativas de envio de e-mail em pouco tempo. Aguarde alguns minutos ou verifique sua caixa de entrada.',
+          };
+        }
+        return {
+          ok: false,
+          erro: authBody.msg || authBody.message || 'Não foi possível enviar o e-mail de confirmação.',
+        };
+      }
+
+      // Quando o e-mail já existe no Auth, o Supabase retorna identities vazio
+      if (Array.isArray(authBody.identities) && authBody.identities.length === 0) {
+        return {
+          ok: false,
+          erro: 'Este e-mail já possui cadastro. Verifique sua caixa de entrada para confirmar ou faça login.',
+        };
+      }
+
+      // 2. Garante o registro na tabela `public.usuarios`
+      let usuario = await this.buscarUsuarioPorEmail(emailLimpo);
+      if (!usuario) {
+        usuario = await this.cadastrarUsuario(dados);
+      }
+
+      return { ok: true, usuario: usuario ?? undefined };
+    } catch {
+      return { ok: false, erro: 'Erro de conexão ao registrar e enviar e-mail de confirmação.' };
+    }
+  }
+
+  /**
+   * Valida login no Supabase Auth exigindo que o e-mail tenha sido confirmado pelo link enviado.
+   */
+  async autenticarComVerificacaoEmail(
+    emailRaw: string,
+    senha: string,
+  ): Promise<{
+    ok: boolean;
+    emailNaoConfirmado?: boolean;
+    erro?: string;
+    usuario?: SupabaseUsuarioRow;
+  }> {
+    if (!isSupabaseConfigured()) {
+      return { ok: false, erro: 'Banco de dados não configurado.' };
+    }
+
+    const email = emailRaw.trim().toLowerCase();
+    try {
+      const [usuarioTabela, authRes] = await Promise.all([
+        this.buscarUsuarioPorEmail(email),
+        fetch(this.authUrl('token?grant_type=password'), {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_CONFIG.anonKey.trim(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password: senha }),
+        }),
+      ]);
+
+      const authBody = (await authRes.json().catch(() => ({}))) as {
+        error_code?: string;
+        msg?: string;
+        user?: { user_metadata?: Record<string, unknown> };
+      };
+
+      if (!authRes.ok) {
+        // Se a conta estiver marcada como `email_verificado = true` na tabela `usuarios` (para contas de teste),
+        // permite o login normalmente desde que a senha esteja correta!
+        if (usuarioTabela && usuarioTabela.senha_hash === senha && usuarioTabela.email_verificado === true) {
+          return { ok: true, usuario: usuarioTabela };
+        }
+
+        const naoConfirmadoExplicito =
+          authBody.error_code === 'email_not_confirmed' ||
+          (authBody.msg ?? '').toLowerCase().includes('email not confirmed');
+
+        // Se a conta existe na tabela `usuarios` e a senha digitada está correta,
+        // significa que o único bloqueio é a falta de confirmação do e-mail no Supabase Auth!
+        if (naoConfirmadoExplicito || (usuarioTabela && usuarioTabela.senha_hash === senha)) {
+          // Caso seja uma conta antiga que ainda não estava no Supabase Auth, dispara o envio do e-mail agora
+          if (!naoConfirmadoExplicito && usuarioTabela) {
+            const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4200';
+            const redirectTo = encodeURIComponent(`${origin}/login?verificado=1`);
+            void fetch(this.authUrl(`signup?redirect_to=${redirectTo}`), {
+              method: 'POST',
+              headers: {
+                apikey: SUPABASE_CONFIG.anonKey.trim(),
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                password: senha,
+                data: { nome: usuarioTabela.nome },
+              }),
+            });
+          }
+
+          return {
+            ok: false,
+            emailNaoConfirmado: true,
+            erro: 'Você ainda não confirmou seu e-mail! Abra sua caixa de entrada (ou pasta de Spam) e clique no link de confirmação que enviamos para liberar o login.',
+          };
+        }
+
+        return {
+          ok: false,
+          erro: 'E-mail ou senha incorretos. Verifique seus dados ou crie uma conta.',
+        };
+      }
+
+      // E-mail confirmado e senha correta! Busca ou cria o perfil na tabela `usuarios`
+      let usuario = usuarioTabela;
+      if (!usuario) {
+        const meta = authBody.user?.user_metadata ?? {};
+        usuario = await this.cadastrarUsuario({
+          nome: String(meta['nome'] ?? email.split('@')[0]),
+          email,
+          senha,
+          telefone: String(meta['telefone'] ?? '(11) 99999-9999'),
+          estado: String(meta['estado_uf'] ?? 'SP'),
+          perfil: (meta['tipo_perfil'] as 'paciente' | 'nutricionista') ?? 'paciente',
+        });
+      }
+
+      if (!usuario) {
+        return { ok: false, erro: 'Não foi possível carregar os dados do usuário no banco.' };
+      }
+
+      if (usuario.email_verificado !== true) {
+        void fetch(this.restUrl(`usuarios?id=eq.${usuario.id}`), {
+          method: 'PATCH',
+          headers: this.headers('return=minimal'),
+          body: JSON.stringify({ email_verificado: true }),
+        });
+      }
+
+      return { ok: true, usuario };
+    } catch {
+      return { ok: false, erro: 'Erro de conexão ao verificar suas credenciais.' };
+    }
+  }
+
+  /** Reenvia o e-mail de confirmação de cadastro pelo Supabase Auth. */
+  async reenviarEmailConfirmacao(emailRaw: string): Promise<{ ok: boolean; mensagem: string }> {
+    const email = emailRaw.trim().toLowerCase();
+    if (!isSupabaseConfigured() || !email) {
+      return { ok: false, mensagem: 'Informe seu e-mail acima para reenviar o link de confirmação.' };
+    }
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4200';
+      const redirectTo = encodeURIComponent(`${origin}/login?verificado=1`);
+      const res = await fetch(this.authUrl(`resend?redirect_to=${redirectTo}`), {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_CONFIG.anonKey.trim(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'signup', email }),
+      });
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          mensagem: 'Aguarde cerca de 60 segundos antes de solicitar um novo reenvio de e-mail.',
+        };
+      }
+      return {
+        ok: true,
+        mensagem: `Um novo e-mail de confirmação foi enviado para ${email}! Verifique sua caixa de entrada e Spam.`,
+      };
+    } catch {
+      return { ok: false, mensagem: 'Erro ao tentar reenviar o e-mail de confirmação.' };
+    }
+  }
+
+  /** Confirma manualmente o e-mail de uma conta de teste direto na tabela `usuarios` do Supabase. */
+  async confirmarEmailParaTeste(emailRaw: string): Promise<boolean> {
+    const email = emailRaw.trim().toLowerCase();
+    if (!isSupabaseConfigured() || !email) return false;
+    try {
+      const encoded = encodeURIComponent(email);
+      const res = await fetch(this.restUrl(`usuarios?email=eq.${encoded}`), {
+        method: 'PATCH',
+        headers: this.headers('return=minimal'),
+        body: JSON.stringify({ email_verificado: true }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }
 
   /** Busca usuário pelo e-mail diretamente na tabela `usuarios` do PostgreSQL (Supabase). */
@@ -159,13 +463,16 @@ export class SupabaseService {
       nome: string;
       telefone: string;
       estado_uf: string;
-      plano_assinatura: 'Essencial' | 'Plano Equilíbrio' | 'Plano Acompanhamento';
+      plano_assinatura: PlanoAssinatura;
       foto_perfil_base64: string | null;
       foto_perfil_mime: string | null;
       lembretes_agua: boolean;
       resumo_semanal_email: boolean;
     }>,
   ): Promise<boolean> {
+    if (campos.plano_assinatura) {
+      this.planoAssinaturaAtual.set(campos.plano_assinatura);
+    }
     if (!isSupabaseConfigured() || !email) return false;
     try {
       const encoded = encodeURIComponent(email.trim().toLowerCase());
@@ -177,6 +484,443 @@ export class SupabaseService {
       return res.ok;
     } catch {
       return false;
+    }
+  }
+
+  /** Lista os amigos vinculados ao plano do usuário titular na tabela `amigos_plano`. */
+  async listarAmigosDoPlano(emailTitular?: string | null): Promise<SupabaseAmigoRow[]> {
+    const email = emailTitular ?? this.emailAutenticado() ?? this.lerEmailSessao();
+    if (!isSupabaseConfigured() || !email) return [];
+    try {
+      const titular = await this.buscarUsuarioPorEmail(email);
+      if (!titular) return [];
+      const res = await fetch(
+        this.restUrl(`amigos_plano?titular_id=eq.${titular.id}&select=*&order=criado_em.asc`),
+        { headers: this.headers() },
+      );
+      if (!res.ok) return [];
+      return (await res.json()) as SupabaseAmigoRow[];
+    } catch {
+      return [];
+    }
+  }
+
+  /** Convidar/adicionar um amigo pelo e-mail ao Plano Dupla (1 amigo) ou Plano Família (até 3 amigos). */
+  async adicionarAmigoPorEmail(
+    emailAmigoRaw: string,
+  ): Promise<{ ok: boolean; erro?: string; amigo?: SupabaseAmigoRow }> {
+    const emailTitular = this.emailAutenticado() ?? this.lerEmailSessao();
+    const emailAmigo = emailAmigoRaw.trim().toLowerCase();
+    if (!emailTitular) {
+      return { ok: false, erro: 'Faça login para convidar amigos para o seu plano.' };
+    }
+    if (!emailAmigo || !emailAmigo.includes('@')) {
+      return { ok: false, erro: 'Informe um e-mail válido do seu amigo.' };
+    }
+    if (emailAmigo === emailTitular.toLowerCase()) {
+      return { ok: false, erro: 'Você já é o titular deste plano. Informe o e-mail de outra pessoa.' };
+    }
+
+    try {
+      const titular = await this.buscarUsuarioPorEmail(emailTitular);
+      if (!titular) {
+        return { ok: false, erro: 'Não foi possível localizar sua conta no banco de dados.' };
+      }
+
+      // Verifica se o e-mail do amigo já possui conta cadastrada na tabela `usuarios`
+      const contaAmigo = await this.buscarUsuarioPorEmail(emailAmigo);
+      const nomeExibicao = contaAmigo?.nome || emailAmigo.split('@')[0];
+      const status: 'ativo' | 'convite_pendente' = contaAmigo ? 'ativo' : 'convite_pendente';
+
+      const res = await fetch(this.restUrl('amigos_plano'), {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({
+          titular_id: titular.id,
+          amigo_usuario_id: contaAmigo?.id ?? null,
+          nome_amigo: nomeExibicao,
+          email_amigo: emailAmigo,
+          status,
+        }),
+      });
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          erro: 'Não foi possível salvar no banco (verifique se este e-mail já foi convidado ou se a tabela amigos_plano foi criada no Supabase).',
+        };
+      }
+
+      // Se o amigo já tem conta no banco, compartilha o mesmo plano de assinatura com ele
+      if (contaAmigo) {
+        await fetch(this.restUrl(`usuarios?id=eq.${contaAmigo.id}`), {
+          method: 'PATCH',
+          headers: this.headers('return=minimal'),
+          body: JSON.stringify({ plano_assinatura: this.planoAssinaturaAtual() }),
+        });
+      }
+
+      const rows = (await res.json()) as SupabaseAmigoRow[];
+      return { ok: true, amigo: rows[0] };
+    } catch {
+      return { ok: false, erro: 'Erro de conexão com o banco de dados ao adicionar amigo.' };
+    }
+  }
+
+  /** Remove um amigo do plano na tabela `amigos_plano`. */
+  async removerAmigoDoPlano(idVinculo: string): Promise<boolean> {
+    if (!isSupabaseConfigured() || !idVinculo) return false;
+    try {
+      const res = await fetch(this.restUrl(`amigos_plano?id=eq.${idVinculo}`), {
+        method: 'DELETE',
+        headers: this.headers('return=minimal'),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private dataHojeIso(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  /** Registra o check-in diário de foco na dieta (+1 dia de ofensiva / streak estilo Duolingo). */
+  async registrarCheckinOfensiva(): Promise<{ ok: boolean; novaOfensiva: number; jaFezHoje: boolean }> {
+    const usuario = await this.buscarUsuarioLogado();
+    if (!usuario) return { ok: false, novaOfensiva: 1, jaFezHoje: false };
+
+    const hoje = this.dataHojeIso();
+    const atual = Number(usuario.ofensiva_dias ?? 1);
+    if (usuario.ultimo_checkin_ofensiva === hoje) {
+      return { ok: true, novaOfensiva: atual, jaFezHoje: true };
+    }
+
+    const nova = atual + 1;
+    try {
+      const res = await fetch(this.restUrl(`usuarios?id=eq.${usuario.id}`), {
+        method: 'PATCH',
+        headers: this.headers('return=minimal'),
+        body: JSON.stringify({
+          ofensiva_dias: nova,
+          ultimo_checkin_ofensiva: hoje,
+        }),
+      });
+      return { ok: res.ok, novaOfensiva: res.ok ? nova : atual, jaFezHoje: false };
+    } catch {
+      return { ok: false, novaOfensiva: atual, jaFezHoje: false };
+    }
+  }
+
+  /** Envia um pedido de amizade pelo e-mail na tabela `amizades`. */
+  async enviarPedidoAmizade(
+    emailDestinoRaw: string,
+  ): Promise<{ ok: boolean; erro?: string; pedido?: SupabaseAmizadeRow }> {
+    const meuUsuario = await this.buscarUsuarioLogado();
+    const emailDestino = emailDestinoRaw.trim().toLowerCase();
+
+    if (!meuUsuario) {
+      return { ok: false, erro: 'Faça login para adicionar amigos.' };
+    }
+    if (!emailDestino || !emailDestino.includes('@')) {
+      return { ok: false, erro: 'Informe um e-mail válido para enviar o pedido de amizade.' };
+    }
+    if (emailDestino === meuUsuario.email.toLowerCase()) {
+      return { ok: false, erro: 'Você não pode enviar pedido de amizade para o seu próprio e-mail.' };
+    }
+
+    try {
+      const usuarioDestino = await this.buscarUsuarioPorEmail(emailDestino);
+      if (!usuarioDestino) {
+        return {
+          ok: false,
+          erro: 'Nenhuma conta encontrada com esse e-mail no NutriSync. Peça para seu amigo criar uma conta primeiro!',
+        };
+      }
+
+      // Verifica se já existe amizade ou pedido entre os dois (em qualquer direção)
+      const meuEmailEnc = encodeURIComponent(meuUsuario.email.toLowerCase());
+      const destEmailEnc = encodeURIComponent(emailDestino);
+      const checkRes = await fetch(
+        this.restUrl(
+          `amizades?or=(and(solicitante_email.eq.${meuEmailEnc},destinatario_email.eq.${destEmailEnc}),and(solicitante_email.eq.${destEmailEnc},destinatario_email.eq.${meuEmailEnc}))&select=*`,
+        ),
+        { headers: this.headers() },
+      );
+
+      if (checkRes.ok) {
+        const existentes = (await checkRes.json()) as SupabaseAmizadeRow[];
+        const ativaOuPendente = existentes.find((e) => e.status !== 'recusada');
+        if (ativaOuPendente) {
+          return {
+            ok: false,
+            erro:
+              ativaOuPendente.status === 'aceita'
+                ? `${usuarioDestino.nome} já está na sua lista de amigos!`
+                : `Já existe um pedido de amizade pendente com ${usuarioDestino.nome}.`,
+          };
+        }
+      }
+
+      const res = await fetch(this.restUrl('amizades'), {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({
+          solicitante_id: meuUsuario.id,
+          solicitante_nome: meuUsuario.nome,
+          solicitante_email: meuUsuario.email.toLowerCase(),
+          destinatario_id: usuarioDestino.id,
+          destinatario_nome: usuarioDestino.nome,
+          destinatario_email: usuarioDestino.email.toLowerCase(),
+          status: 'pendente',
+          incentivos: 0,
+        }),
+      });
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          erro: 'Não foi possível enviar o pedido (verifique se a tabela amizades foi criada no Supabase).',
+        };
+      }
+
+      const rows = (await res.json()) as SupabaseAmizadeRow[];
+      return { ok: true, pedido: rows[0] };
+    } catch {
+      return { ok: false, erro: 'Erro de conexão ao enviar pedido de amizade.' };
+    }
+  }
+
+  /** Aceita ou recusa um pedido de amizade recebido. */
+  async responderPedidoAmizade(amizadeId: string, aceitar: boolean): Promise<boolean> {
+    if (!isSupabaseConfigured() || !amizadeId) return false;
+    try {
+      if (!aceitar) {
+        const del = await fetch(this.restUrl(`amizades?id=eq.${amizadeId}`), {
+          method: 'DELETE',
+          headers: this.headers('return=minimal'),
+        });
+        return del.ok;
+      }
+      const res = await fetch(this.restUrl(`amizades?id=eq.${amizadeId}`), {
+        method: 'PATCH',
+        headers: this.headers('return=minimal'),
+        body: JSON.stringify({ status: 'aceita' }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Remove uma amizade ou cancela um pedido enviado. */
+  async removerAmizade(amizadeId: string): Promise<boolean> {
+    if (!isSupabaseConfigured() || !amizadeId) return false;
+    try {
+      const res = await fetch(this.restUrl(`amizades?id=eq.${amizadeId}`), {
+        method: 'DELETE',
+        headers: this.headers('return=minimal'),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Envia um incentivo ("foguinho" estilo Duolingo) para o amigo. */
+  async incentivarAmigo(amizadeId: string, incentivosAtuais: number): Promise<number> {
+    const novo = incentivosAtuais + 1;
+    if (!isSupabaseConfigured() || !amizadeId) return novo;
+    try {
+      await fetch(this.restUrl(`amizades?id=eq.${amizadeId}`), {
+        method: 'PATCH',
+        headers: this.headers('return=minimal'),
+        body: JSON.stringify({ incentivos: novo }),
+      });
+      return novo;
+    } catch {
+      return novo;
+    }
+  }
+
+  /** Carrega pedidos recebidos, pedidos enviados e a lista de amigos com Streak e progresso real do banco. */
+  async carregarPainelSocialAmigos(): Promise<{
+    meuUsuario: SupabaseUsuarioRow | null;
+    minhaOfensiva: number;
+    fizCheckinHoje: boolean;
+    pedidosRecebidos: SupabaseAmizadeRow[];
+    pedidosEnviados: SupabaseAmizadeRow[];
+    amigos: AmigoComProgresso[];
+  }> {
+    const meuUsuario = await this.buscarUsuarioLogado();
+    const hoje = this.dataHojeIso();
+    if (!meuUsuario) {
+      return {
+        meuUsuario: null,
+        minhaOfensiva: 0,
+        fizCheckinHoje: false,
+        pedidosRecebidos: [],
+        pedidosEnviados: [],
+        amigos: [],
+      };
+    }
+
+    const minhaOfensiva = Number(meuUsuario.ofensiva_dias ?? 1);
+    const fizCheckinHoje = meuUsuario.ultimo_checkin_ofensiva === hoje;
+
+    try {
+      const meuEmailEnc = encodeURIComponent(meuUsuario.email.toLowerCase());
+      const res = await fetch(
+        this.restUrl(
+          `amizades?or=(solicitante_email.eq.${meuEmailEnc},destinatario_email.eq.${meuEmailEnc})&select=*&order=criado_em.desc`,
+        ),
+        { headers: this.headers() },
+      );
+
+      if (!res.ok) {
+        return {
+          meuUsuario,
+          minhaOfensiva,
+          fizCheckinHoje,
+          pedidosRecebidos: [],
+          pedidosEnviados: [],
+          amigos: [],
+        };
+      }
+
+      const todas = (await res.json()) as SupabaseAmizadeRow[];
+      const meuEmail = meuUsuario.email.toLowerCase();
+
+      const pedidosRecebidos = todas.filter(
+        (a) => a.status === 'pendente' && a.destinatario_email.toLowerCase() === meuEmail,
+      );
+      const pedidosEnviados = todas.filter(
+        (a) => a.status === 'pendente' && a.solicitante_email.toLowerCase() === meuEmail,
+      );
+      const aceitas = todas.filter((a) => a.status === 'aceita');
+
+      const amigos: AmigoComProgresso[] = await Promise.all(
+        aceitas.map(async (rel) => {
+          const souSolicitante = rel.solicitante_email.toLowerCase() === meuEmail;
+          const emailAmigo = souSolicitante ? rel.destinatario_email : rel.solicitante_email;
+          const nomePadrao = souSolicitante ? rel.destinatario_nome : rel.solicitante_nome;
+
+          const uAmigo = await this.buscarUsuarioPorEmail(emailAmigo);
+          if (!uAmigo) {
+            return {
+              amizadeId: rel.id,
+              nome: nomePadrao,
+              email: emailAmigo,
+              fotoBase64: null,
+              ofensivaDias: 1,
+              fezCheckinHoje: false,
+              temDietaAtiva: false,
+              objetivoTexto: 'Ainda montando o plano',
+              metaKcal: null,
+              progressoMetaPct: 0,
+              ultimoPesoKg: null,
+              incentivos: Number(rel.incentivos ?? 0),
+            };
+          }
+
+          // Busca perfil nutricional, plano alimentar ativo e histórico de peso do amigo
+          const [perfilRes, planoRes, pesosRes] = await Promise.all([
+            fetch(this.restUrl(`perfis_nutricionais?usuario_id=eq.${uAmigo.id}&select=*&limit=1`), {
+              headers: this.headers(),
+            }),
+            fetch(
+              this.restUrl(
+                `planos_alimentares?usuario_id=eq.${uAmigo.id}&ativo=eq.true&select=*&order=criado_em.desc&limit=1`,
+              ),
+              { headers: this.headers() },
+            ),
+            fetch(
+              this.restUrl(`registros_peso?usuario_id=eq.${uAmigo.id}&select=*&order=criado_em.asc`),
+              { headers: this.headers() },
+            ),
+          ]);
+
+          const perfis = perfilRes.ok ? ((await perfilRes.json()) as Array<Record<string, unknown>>) : [];
+          const planos = planoRes.ok ? ((await planoRes.json()) as Array<Record<string, unknown>>) : [];
+          const pesos = pesosRes.ok ? ((await pesosRes.json()) as Array<Record<string, unknown>>) : [];
+
+          const pRow = perfis[0];
+          const sRow = planos[0];
+
+          let objetivoTexto = 'Ainda não montou a dieta';
+          let metaKcal: number | null = null;
+          let progressoMetaPct = 0;
+          let ultimoPesoKg: number | null = null;
+
+          if (pRow && sRow) {
+            const obj = String(pRow['objetivo'] ?? 'Manter o peso');
+            const delta = Number(pRow['delta_kg'] ?? 0);
+            const pesoInicial = Number(pRow['peso_inicial_kg'] ?? 0);
+            const pesoMeta = Number(sRow['peso_meta_kg'] ?? pesoInicial);
+            metaKcal = Number(sRow['meta_kcal'] ?? 0);
+
+            if (obj === 'Perder peso') objetivoTexto = `Perder ${delta} kg`;
+            else if (obj === 'Ganhar massa') objetivoTexto = `Ganhar ${delta} kg`;
+            else objetivoTexto = `Manter ${pesoInicial} kg`;
+
+            ultimoPesoKg = pesos.length
+              ? Number(pesos[pesos.length - 1]['peso_kg'])
+              : pesoInicial;
+
+            if (obj === 'Manter o peso') {
+              progressoMetaPct = 100;
+            } else {
+              const total = pesoMeta - pesoInicial;
+              if (total !== 0 && ultimoPesoKg !== null) {
+                progressoMetaPct = Math.max(
+                  0,
+                  Math.min(100, Math.round(((ultimoPesoKg - pesoInicial) / total) * 100)),
+                );
+              }
+            }
+          }
+
+          const ofensivaBase = Number(uAmigo.ofensiva_dias ?? 1);
+          const ofensivaCalculada = Math.max(ofensivaBase, pesos.length || (sRow ? 1 : 0));
+
+          return {
+            amizadeId: rel.id,
+            nome: uAmigo.nome,
+            email: uAmigo.email,
+            fotoBase64: uAmigo.foto_perfil_base64 ?? null,
+            ofensivaDias: ofensivaCalculada,
+            fezCheckinHoje: uAmigo.ultimo_checkin_ofensiva === hoje || Boolean(sRow),
+            temDietaAtiva: Boolean(sRow),
+            objetivoTexto,
+            metaKcal,
+            progressoMetaPct,
+            ultimoPesoKg,
+            incentivos: Number(rel.incentivos ?? 0),
+          };
+        }),
+      );
+
+      // Ordena amigos pela maior ofensiva (ranking estilo Duolingo)
+      amigos.sort((a, b) => b.ofensivaDias - a.ofensivaDias);
+
+      return {
+        meuUsuario,
+        minhaOfensiva,
+        fizCheckinHoje,
+        pedidosRecebidos,
+        pedidosEnviados,
+        amigos,
+      };
+    } catch {
+      return {
+        meuUsuario,
+        minhaOfensiva,
+        fizCheckinHoje,
+        pedidosRecebidos: [],
+        pedidosEnviados: [],
+        amigos: [],
+      };
     }
   }
 
