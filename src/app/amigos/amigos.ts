@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { marinaPhoto } from '../nutrisync-data';
+import { defaultUserAvatar } from '../nutrisync-data';
 import {
   AmigoComProgresso,
   SupabaseAmizadeRow,
@@ -16,7 +16,7 @@ import {
 export class Amigos {
   private readonly supabase = inject(SupabaseService);
 
-  protected readonly defaultPhoto = marinaPhoto;
+  protected readonly defaultPhoto = defaultUserAvatar;
   protected readonly meuNome = signal('');
   protected readonly meuEmail = signal('');
   protected readonly minhaFoto = signal<string | null>(null);

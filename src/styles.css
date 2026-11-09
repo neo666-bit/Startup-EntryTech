@@ -4,6 +4,11 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  font-family: 'Roboto Slab', serif;
+}
+
+button, input, select, textarea {
+  font-family: 'Roboto Slab', serif;
 }
 
 /* cores usadas nos outros arquivos CSS*/
@@ -24,4 +29,5 @@ html, body {
 body {
   background: var(--background);
   color: var(--cor-texto);
+  font-family: 'Roboto Slab', serif;
 }

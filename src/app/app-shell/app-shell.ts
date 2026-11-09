@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { marinaPhoto } from '../nutrisync-data';
+import { defaultUserAvatar } from '../nutrisync-data';
 import { DietService } from '../nutrisync/diet.service';
 import { PlanoAssinatura, SupabaseAmigoRow, SupabaseService } from '../nutrisync/supabase.service';
 
@@ -51,7 +51,7 @@ export class AppShell {
   protected readonly diet = inject(DietService);
   private readonly supabase = inject(SupabaseService);
 
-  protected readonly defaultPhoto = marinaPhoto;
+  protected readonly defaultPhoto = defaultUserAvatar;
   protected readonly menuOpen = signal(false);
   protected readonly activeModal = signal<UserModalKind>(null);
 

@@ -1,4 +1,4 @@
-:host { display: block; min-height: 100vh; background: var(--background, #f3f0e8); color: var(--cor-texto, #1f2a24); font-family: Inter, system-ui, sans-serif; }
+:host { display: block; min-height: 100vh; background: var(--background, #f3f0e8); color: var(--cor-texto, #1f2a24); font-family: 'Roboto Slab', serif; }
 .auth-page { max-width: 1080px; margin: 0 auto; padding: 20px 20px 48px; }
 .auth-topbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 26px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--verde-escuro, #2b4a3d); font-size: 22px; }
@@ -8,7 +8,7 @@
 .auth-shell { display: grid; grid-template-columns: 1fr 1.05fr; gap: 24px; }
 .auth-editorial { background: var(--verde-escuro, #2b4a3d); color: #f3f0e8; border-radius: 22px; padding: 38px 34px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; }
 .etiqueta { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
-.titulo-editorial { font-family: Georgia, serif; font-size: clamp(28px, 3.2vw, 38px); line-height: 1.12; margin: 12px 0 14px; }
+.titulo-editorial { font-family: 'Roboto Slab', serif; font-size: clamp(28px, 3.2vw, 38px); line-height: 1.12; margin: 12px 0 14px; }
 .descricao-editorial { margin: 0 0 22px; color: #dce6df; line-height: 1.55; font-size: 15px; }
 .lista-beneficios { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; font-size: 14px; color: #e6efe9; }
 .lista-beneficios li { padding-left: 22px; position: relative; }
@@ -18,7 +18,7 @@
 .resumo-card small { color: #cfdcd5; font-size: 13px; }
 .auth-card { background: var(--fundo-card, #fbfaf5); border: 1px solid #dcdad2; border-radius: 22px; padding: 36px; box-shadow: 0 12px 30px rgba(31, 42, 36, .06); }
 .sobretitulo { color: var(--cor-destaque, #e07a54); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.auth-card h2 { font-family: Georgia, serif; font-size: 28px; margin: 6px 0; }
+.auth-card h2 { font-family: 'Roboto Slab', serif; font-size: 28px; margin: 6px 0; }
 .subtitulo { margin: 0 0 20px; color: var(--cor-texto-secundario, #667068); font-size: 14px; }
 .alerta-erro { padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; background: #fdecea; border: 1px solid #f5c2be; color: #922b21; }
 .auth-form { display: grid; gap: 15px; }
